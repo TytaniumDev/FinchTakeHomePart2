@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'debug/bird_position_test_screen.dart';
 import 'debug/debug_picker_screen.dart';
 import 'debug/draggable_sheet_test_screen.dart';
+import 'debug/grid_scaling_test_screen.dart';
 import 'models/vibe_data.dart';
 import 'widgets/bird_view_area.dart';
 import 'widgets/vibe_picker_sheet.dart';
@@ -41,6 +42,7 @@ class VibesScreen extends StatelessWidget {
         '/debug': (_) => const DebugPickerScreen(),
         '/debug/bird': (_) => const BirdPositionTestScreen(),
         '/debug/sheet': (_) => const DraggableSheetTestScreen(),
+        '/debug/grid': (_) => const GridScalingTestScreen(),
       },
     );
   }
@@ -56,8 +58,13 @@ class VibeSelectionScreen extends StatefulWidget {
 class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
   int? _selectedVibeIndex;
   double _parallaxOffset = 0;
-  double _sheetExtent = VibePickerSheet.kMinExtent;
+  double? _sheetExtent;
   BirdAge _birdAge = BirdAge.adult;
+
+  // Cached values — recomputed only when screen metrics change.
+  double _computedMinExtent = 0.38;
+  double _computedTargetRows = 1.4;
+  double _screenHeight = 800;
 
   VibeTheme get _theme {
     if (_selectedVibeIndex == null) return VibeTheme.magic;
@@ -65,9 +72,26 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _screenHeight = MediaQuery.sizeOf(context).height;
+    final safeAreaBottom = MediaQuery.paddingOf(context).bottom;
+    final result = VibePickerSheet.computeMinExtent(
+      screenHeight: _screenHeight,
+      safeAreaBottom: safeAreaBottom,
+    );
+    _computedMinExtent = result.extent;
+    _computedTargetRows = result.targetRows;
+    if (_sheetExtent != null && _sheetExtent! < _computedMinExtent) {
+      _sheetExtent = _computedMinExtent;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = _theme;
     final birdSize = _birdAge == BirdAge.adult ? 150.0 : 112.5;
+    final effectiveExtent = _sheetExtent ?? _computedMinExtent;
 
     return Scaffold(
       body: Stack(
@@ -80,7 +104,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
               birdAssetPath: theme.birdAssetPath(_birdAge),
               birdSize: birdSize,
               parallaxOffset: _parallaxOffset,
-              sheetExtent: _sheetExtent,
+              sheetExtent: effectiveExtent,
             ),
           ),
 
@@ -93,13 +117,13 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
             },
             drawerBackground: theme.drawerBackground,
             footerBackground: theme.footerBackground,
+            minExtent: _computedMinExtent,
+            targetRows: _computedTargetRows,
             onExtentChanged: (extent) {
               setState(() {
                 _sheetExtent = extent;
-                // Parallax: bird shifts up at ~30% of the drag delta
-                final dragDelta = extent - VibePickerSheet.kMinExtent;
-                _parallaxOffset =
-                    -dragDelta * MediaQuery.of(context).size.height * 0.3;
+                final dragDelta = extent - _computedMinExtent;
+                _parallaxOffset = -dragDelta * _screenHeight * 0.3;
               });
             },
             onDone: () {

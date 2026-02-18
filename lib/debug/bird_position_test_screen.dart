@@ -53,8 +53,17 @@ class _BirdPositionTestScreenState extends State<BirdPositionTestScreen> {
             child: Container(
               width: double.infinity,
               color: VibeTheme.magic.birdAreaBackground,
-              child: Center(
-                child: _BirdPreview(assetPath: _assetPath, birdSize: _birdSize),
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 96,
+                    child: Center(
+                      child: _BirdPreview(assetPath: _assetPath, birdSize: _birdSize),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -145,7 +154,13 @@ class _BirdPreview extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SvgPicture.asset(assetPath, width: birdSize, height: birdSize),
+              SizedBox(
+                height: 150,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: SvgPicture.asset(assetPath, width: birdSize, height: birdSize),
+                ),
+              ),
               // Red anchor line flush with the bottom of the SVG
               Container(width: birdSize + 40, height: 2, color: Colors.red),
             ],

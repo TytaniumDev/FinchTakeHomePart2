@@ -9,11 +9,15 @@ class VibeOptionTile extends StatelessWidget {
     required this.vibe,
     required this.isSelected,
     required this.onTap,
+    this.iconSize = 64,
+    this.scale = 1.0,
   });
 
   final VibeOption vibe;
   final bool isSelected;
   final VoidCallback onTap;
+  final double iconSize;
+  final double scale;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +25,7 @@ class VibeOptionTile extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(8 * scale),
         decoration: BoxDecoration(
           color: isSelected
               ? const Color.fromRGBO(255, 255, 255, 0.2)
@@ -32,15 +36,15 @@ class VibeOptionTile extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 64,
-              height: 64,
+              width: iconSize,
+              height: iconSize,
               decoration: const BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
               ),
-              child: Center(child: Icon(vibe.icon, color: Colors.grey)),
+              child: Center(child: Icon(vibe.icon, color: Colors.grey, size: iconSize * 0.5)),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8 * scale),
             Text(
               vibe.label,
               style: const TextStyle(color: Colors.white),
