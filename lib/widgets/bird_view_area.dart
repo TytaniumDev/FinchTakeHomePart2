@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../models/bird_anchor_data.dart';
 import '../theme/animation.dart';
 import 'speech_bubble.dart';
 
@@ -23,6 +24,7 @@ class BirdViewArea extends StatelessWidget {
     required this.minExtent,
     required this.maxExtent,
     required this.topReserved,
+    this.useNewBubblePositioning = false,
   });
 
   // Approximate height of the bird column (speech bubble + gap + bird container).
@@ -44,8 +46,68 @@ class BirdViewArea extends StatelessWidget {
   /// The bird column is centered between this and the sheet top.
   final double topReserved;
 
+  /// When true, positions the speech bubble using per-asset anchor data
+  /// so the tail aligns with the bird's mouth.
+  final bool useNewBubblePositioning;
+
+  Widget _buildOldLayout() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SpeechBubble(text: speechBubbleText),
+        const SizedBox(height: 4),
+        SizedBox(
+          height: 150,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: SvgPicture.asset(
+              birdAssetPath,
+              width: birdSize,
+              height: birdSize,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNewLayout(BirdAnchor anchor) {
+    final tailXOffset = (anchor.mouthX - 0.5) * birdSize;
+    final bubbleBottom = birdSize * (1 - anchor.safeAreaTopY);
+
+    return SizedBox(
+      height: 150,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Bird at bottom center
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: SvgPicture.asset(
+              birdAssetPath,
+              width: birdSize,
+              height: birdSize,
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: bubbleBottom,
+            child: SpeechBubble(
+              text: speechBubbleText,
+              tailXOffset: tailXOffset,
+            ),
+          ),
+          // Speech bubble positioned so tail tip sits at safeAreaTopY
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final anchor = useNewBubblePositioning ? kBirdAnchors[birdAssetPath] : null;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableHeight = constraints.maxHeight;
@@ -82,24 +144,9 @@ class BirdViewArea extends StatelessWidget {
                   child: child!,
                 );
               },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SpeechBubble(text: speechBubbleText),
-                  const SizedBox(height: 4),
-                  SizedBox(
-                    height: 150,
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: SvgPicture.asset(
-                        birdAssetPath,
-                        width: birdSize,
-                        height: birdSize,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              child: anchor != null
+                  ? _buildNewLayout(anchor)
+                  : _buildOldLayout(),
             ),
           ],
         );

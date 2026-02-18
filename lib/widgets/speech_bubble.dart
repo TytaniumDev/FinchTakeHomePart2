@@ -6,9 +6,10 @@ import 'animated_typed_text.dart';
 
 /// A speech bubble with a tail, displaying [text].
 class SpeechBubble extends StatelessWidget {
-  const SpeechBubble({super.key, required this.text});
+  const SpeechBubble({super.key, required this.text, this.tailXOffset = -25});
 
   final String text;
+  final double tailXOffset;
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +36,14 @@ class SpeechBubble extends StatelessWidget {
         ),
         // Tail pointing down toward the bird
         Transform.translate(
-          offset: const Offset(-25, -1),
-          child: SvgPicture.asset(
-            'assets/speech-bubble-tail.svg',
-            width: 16,
-            height: 10,
+          offset: Offset(tailXOffset, -1),
+          child: Transform.flip(
+            flipX: tailXOffset > 0.5,
+            child: SvgPicture.asset(
+              'assets/speech-bubble-tail.svg',
+              width: 16,
+              height: 10,
+            ),
           ),
         ),
       ],

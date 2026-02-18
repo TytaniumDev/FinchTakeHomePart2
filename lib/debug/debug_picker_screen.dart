@@ -33,6 +33,11 @@ const _kDebugEntries = [
     subtitle: 'Test adaptive grid sizing at various screen heights',
     route: '/debug/grid',
   ),
+  _DebugEntry(
+    title: 'Bird Anchor Calibration',
+    subtitle: 'Calibrate mouth position and safe area for each bird asset',
+    route: '/debug/anchor',
+  ),
 ];
 
 /// Picker screen that lists all available debug test widgets.

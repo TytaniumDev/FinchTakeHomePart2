@@ -2,6 +2,7 @@ import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'debug/bird_anchor_calibration_screen.dart';
 import 'debug/bird_position_test_screen.dart';
 import 'debug/debug_picker_screen.dart';
 import 'debug/draggable_sheet_test_screen.dart';
@@ -44,6 +45,7 @@ class VibesScreen extends StatelessWidget {
         '/debug/bird': (_) => const BirdPositionTestScreen(),
         '/debug/sheet': (_) => const DraggableSheetTestScreen(),
         '/debug/grid': (_) => const GridScalingTestScreen(),
+        '/debug/anchor': (_) => const BirdAnchorCalibrationScreen(),
       },
     );
   }
@@ -59,6 +61,7 @@ class VibeSelectionScreen extends StatefulWidget {
 class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
   int? _selectedVibeIndex;
   BirdAge _birdAge = BirdAge.adult;
+  bool _useNewBubblePositioning = false;
 
   // Sheet extent driven by a ValueNotifier so only BirdViewArea rebuilds
   // during drag, not the entire screen.
@@ -134,6 +137,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
               minExtent: _computedMinExtent,
               maxExtent: _computedMaxExtent,
               topReserved: appBarBottom,
+              useNewBubblePositioning: _useNewBubblePositioning,
             ),
           ),
 
@@ -153,7 +157,10 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
               _sheetExtentNotifier.value = extent;
             },
             onDone: () {
-              // Handle done
+              setState(
+                () =>
+                    _useNewBubblePositioning = !_useNewBubblePositioning,
+              );
             },
           ),
 
