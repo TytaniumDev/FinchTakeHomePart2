@@ -9,26 +9,42 @@ class SpeechBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      switchInCurve: Curves.easeInOut,
+      switchOutCurve: Curves.easeInOut,
+      layoutBuilder: (currentChild, previousChildren) {
+        return Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            ...previousChildren,
+            ?currentChild,
+          ],
+        );
+      },
+      child: Column(
+        key: ValueKey(text),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(text),
           ),
-          child: Text(text),
-        ),
-        // Tail pointing down toward the bird
-        SvgPicture.asset(
-          'assets/speech-bubble-tail.svg',
-          width: 16,
-          height: 8,
-          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-        ),
-      ],
+          // Tail pointing down toward the bird
+          SvgPicture.asset(
+            'assets/speech-bubble-tail.svg',
+            width: 16,
+            height: 8,
+            colorFilter:
+                const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          ),
+        ],
+      ),
     );
   }
 }

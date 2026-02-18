@@ -45,12 +45,24 @@ class BirdViewArea extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SpeechBubble(text: speechBubbleText),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    alignment: Alignment.bottomCenter,
+                    clipBehavior: Clip.none,
+                    child: SpeechBubble(text: speechBubbleText),
+                  ),
                   const SizedBox(height: 4),
-                  SvgPicture.asset(
-                    birdAssetPath,
-                    width: birdSize,
-                    height: birdSize,
+                  SizedBox(
+                    height: 150,
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: SvgPicture.asset(
+                        birdAssetPath,
+                        width: birdSize,
+                        height: birdSize,
+                      ),
+                    ),
                   ),
                 ],
               ),
