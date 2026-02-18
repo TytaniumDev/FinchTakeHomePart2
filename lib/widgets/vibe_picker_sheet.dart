@@ -4,6 +4,7 @@ import 'package:fading_edge_scrollview/fading_edge_scrollview.dart';
 import 'package:flutter/material.dart';
 
 import '../models/vibe_data.dart';
+import 'adaptive_grid_delegate.dart';
 import 'footer.dart';
 import 'vibe_drawer.dart';
 
@@ -22,18 +23,63 @@ class VibePickerSheet extends StatefulWidget {
     required this.onSelected,
     required this.drawerBackground,
     required this.footerBackground,
+    required this.minExtent,
+    required this.targetRows,
     this.onExtentChanged,
     this.onDone,
   });
 
-  static const double kMinExtent = 0.38;
   static const double kMaxExtent = 0.65;
+  static const double kMinExtentFloor = 0.3;
+  static const double kMinExtentCeiling = 0.45;
+  static const double kHandleHeight = 24.0;
+  static const double kFooterBaseHeight = 80.0;
+
+  /// Computes the dynamic min extent and target rows for a given screen.
+  ///
+  /// Finds the largest N (full rows) where showing N rows + 40% of the next
+  /// row keeps the sheet extent within [kMinExtentFloor, kMinExtentCeiling].
+  static ({double extent, double targetRows}) computeMinExtent({
+    required double screenHeight,
+    required double safeAreaBottom,
+  }) {
+    final overhead = kHandleHeight + kFooterBaseHeight + safeAreaBottom;
+    const maxTile = SliverGridDelegateWithAdaptiveHeight.kDefaultMaxTileHeight;
+    const spacing =
+        SliverGridDelegateWithAdaptiveHeight.kDefaultMainAxisSpacing;
+
+    // Try increasing N from 1 upward; find the largest that fits.
+    int bestN = 0;
+    for (int n = 1; n <= 6; n++) {
+      final gridHeight = (n + 0.4) * maxTile + n * spacing;
+      final extent = (overhead + gridHeight) / screenHeight;
+      if (extent <= kMinExtentCeiling) {
+        bestN = n;
+      } else {
+        break;
+      }
+    }
+
+    if (bestN == 0) {
+      // Very small screen — use ceiling with fallback rows.
+      return (extent: kMinExtentCeiling, targetRows: 1.4);
+    }
+
+    final gridHeight = (bestN + 0.4) * maxTile + bestN * spacing;
+    final extent = ((overhead + gridHeight) / screenHeight).clamp(
+      kMinExtentFloor,
+      kMinExtentCeiling,
+    );
+    return (extent: extent, targetRows: bestN + 0.4);
+  }
 
   final List<VibeOption> vibes;
   final int? selectedIndex;
   final ValueChanged<int> onSelected;
   final Color drawerBackground;
   final Color footerBackground;
+  final double minExtent;
+  final double targetRows;
   final ValueChanged<double>? onExtentChanged;
   final VoidCallback? onDone;
 
@@ -42,8 +88,30 @@ class VibePickerSheet extends StatefulWidget {
 }
 
 class _VibePickerSheetState extends State<VibePickerSheet> {
-  double _sheetPosition = VibePickerSheet.kMinExtent;
+  late double _sheetPosition;
   final _gridScrollController = ScrollController();
+  double _cachedSafeAreaBottom = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _sheetPosition = widget.minExtent;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _cachedSafeAreaBottom = MediaQuery.paddingOf(context).bottom;
+  }
+
+  @override
+  void didUpdateWidget(VibePickerSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.minExtent != widget.minExtent &&
+        _sheetPosition < widget.minExtent) {
+      _sheetPosition = widget.minExtent;
+    }
+  }
 
   @override
   void dispose() {
@@ -55,7 +123,7 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
     setState(() {
       _sheetPosition -= details.delta.dy / viewHeight;
       _sheetPosition = _sheetPosition.clamp(
-        VibePickerSheet.kMinExtent,
+        widget.minExtent,
         VibePickerSheet.kMaxExtent,
       );
     });
@@ -63,12 +131,10 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
   }
 
   void _onHandleDragEnd(DragEndDetails details) {
-    // Snap to the nearest extent.
-    final mid =
-        (VibePickerSheet.kMinExtent + VibePickerSheet.kMaxExtent) / 2;
+    final mid = (widget.minExtent + VibePickerSheet.kMaxExtent) / 2;
     final target = _sheetPosition > mid
         ? VibePickerSheet.kMaxExtent
-        : VibePickerSheet.kMinExtent;
+        : widget.minExtent;
     setState(() => _sheetPosition = target);
     widget.onExtentChanged?.call(_sheetPosition);
   }
@@ -79,15 +145,27 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
       builder: (context, constraints) {
         final viewHeight = constraints.maxHeight;
 
+        final minSheetHeight = viewHeight * widget.minExtent;
+        final availableGridHeight =
+            minSheetHeight -
+            VibePickerSheet.kHandleHeight -
+            VibePickerSheet.kFooterBaseHeight -
+            _cachedSafeAreaBottom;
+
+        final gridDelegate = SliverGridDelegateWithAdaptiveHeight(
+          availableGridHeight: availableGridHeight,
+          targetVisibleRows: widget.targetRows,
+        );
+        final iconSize = gridDelegate.scaledIconSize();
+        final tileScale = gridDelegate.scaleFactor;
+
         return DraggableScrollableSheet(
+          key: ValueKey(widget.minExtent),
           initialChildSize: _sheetPosition,
-          minChildSize: VibePickerSheet.kMinExtent,
+          minChildSize: widget.minExtent,
           maxChildSize: VibePickerSheet.kMaxExtent,
           snap: true,
-          snapSizes: const [
-            VibePickerSheet.kMinExtent,
-            VibePickerSheet.kMaxExtent,
-          ],
+          snapSizes: [widget.minExtent, VibePickerSheet.kMaxExtent],
           builder: (context, scrollController) {
             // scrollController is unused — the handle drives the sheet
             // position manually, and the grid has its own controller.
@@ -126,13 +204,7 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 16),
                               sliver: SliverGrid(
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 3,
-                                      mainAxisSpacing: 8,
-                                      crossAxisSpacing: 8,
-                                      childAspectRatio: 0.85,
-                                    ),
+                                gridDelegate: gridDelegate,
                                 delegate: SliverChildBuilderDelegate(
                                   (context, index) {
                                     return VibeOptionTile(
@@ -141,6 +213,8 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
                                           widget.selectedIndex == index,
                                       onTap: () =>
                                           widget.onSelected(index),
+                                    iconSize: iconSize,
+                                    scale: tileScale,
                                     );
                                   },
                                   childCount: widget.vibes.length,

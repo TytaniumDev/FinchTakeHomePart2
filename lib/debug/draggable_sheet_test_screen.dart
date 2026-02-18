@@ -17,7 +17,27 @@ class DraggableSheetTestScreen extends StatefulWidget {
 
 class _DraggableSheetTestScreenState extends State<DraggableSheetTestScreen> {
   int? _selectedIndex;
-  double _currentExtent = VibePickerSheet.kMinExtent;
+  double _currentExtent = 0.38;
+
+  // Cached from computeMinExtent — updated in didChangeDependencies.
+  double _minExtent = 0.38;
+  double _targetRows = 1.4;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final safeAreaBottom = MediaQuery.paddingOf(context).bottom;
+    final result = VibePickerSheet.computeMinExtent(
+      screenHeight: screenHeight,
+      safeAreaBottom: safeAreaBottom,
+    );
+    _minExtent = result.extent;
+    _targetRows = result.targetRows;
+    if (_currentExtent < _minExtent) {
+      _currentExtent = _minExtent;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +56,10 @@ class _DraggableSheetTestScreenState extends State<DraggableSheetTestScreen> {
                     const SizedBox(height: 16),
 
                     // Extent readout
-                    _ExtentReadout(extent: _currentExtent),
+                    _ExtentReadout(
+                      extent: _currentExtent,
+                      minExtent: _minExtent,
+                    ),
                   ],
                 ),
               ),
@@ -50,6 +73,8 @@ class _DraggableSheetTestScreenState extends State<DraggableSheetTestScreen> {
             onSelected: (index) => setState(() => _selectedIndex = index),
             drawerBackground: const Color(0xFF1B4934),
             footerBackground: const Color(0xFF285641),
+            minExtent: _minExtent,
+            targetRows: _targetRows,
             onExtentChanged: (extent) {
               setState(() => _currentExtent = extent);
             },
@@ -84,9 +109,10 @@ class _BackButtonRow extends StatelessWidget {
 }
 
 class _ExtentReadout extends StatelessWidget {
-  const _ExtentReadout({required this.extent});
+  const _ExtentReadout({required this.extent, required this.minExtent});
 
   final double extent;
+  final double minExtent;
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +134,7 @@ class _ExtentReadout extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Min: ${VibePickerSheet.kMinExtent}  |  Max: ${VibePickerSheet.kMaxExtent}',
+          'Min: ${minExtent.toStringAsFixed(3)}  |  Max: ${VibePickerSheet.kMaxExtent}',
           style: const TextStyle(color: Colors.white54, fontSize: 14),
         ),
       ],

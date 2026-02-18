@@ -28,6 +28,11 @@ const _kDebugEntries = [
     subtitle: 'Test drag behavior and extent values',
     route: '/debug/sheet',
   ),
+  _DebugEntry(
+    title: 'Grid Scaling',
+    subtitle: 'Test adaptive grid sizing at various screen heights',
+    route: '/debug/grid',
+  ),
 ];
 
 /// Picker screen that lists all available debug test widgets.

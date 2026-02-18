@@ -15,7 +15,7 @@ class BirdViewArea extends StatelessWidget {
     required this.birdAssetPath,
     this.birdSize = 150,
     this.parallaxOffset = 0,
-    this.sheetExtent = 0.38,
+    required this.sheetExtent,
   });
 
   final Color backgroundColor;
