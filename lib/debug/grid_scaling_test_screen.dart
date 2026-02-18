@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/vibe_data.dart';
 import '../theme/colors.dart';
 import '../widgets/adaptive_grid_delegate.dart';
-import '../widgets/vibe_drawer.dart';
+import '../widgets/vibe_option_tile.dart';
 import '../widgets/vibe_picker_sheet.dart';
 
 /// Device presets for quick testing.

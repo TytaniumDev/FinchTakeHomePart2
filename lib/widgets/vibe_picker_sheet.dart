@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import '../models/vibe_data.dart';
 import 'adaptive_grid_delegate.dart';
 import 'footer.dart';
-import 'vibe_drawer.dart';
+import 'vibe_option_tile.dart';
 
 /// A draggable bottom sheet that contains the vibe picker grid and footer.
 ///
@@ -90,7 +90,15 @@ class VibePickerSheet extends StatefulWidget {
 class _VibePickerSheetState extends State<VibePickerSheet> {
   late double _sheetPosition;
   final _gridScrollController = ScrollController();
+  final _sheetController = DraggableScrollableController();
   double _cachedSafeAreaBottom = 0;
+  double _cachedViewHeight = 0;
+
+  // Cached grid delegate and derived values — recomputed only when inputs change.
+  SliverGridDelegateWithAdaptiveHeight? _gridDelegate;
+  double _gridIconSize = 64;
+  double _gridTileScale = 1;
+  double _lastAvailableGridHeight = -1;
 
   @override
   void initState() {
@@ -102,31 +110,57 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _cachedSafeAreaBottom = MediaQuery.paddingOf(context).bottom;
+    _cachedViewHeight = MediaQuery.sizeOf(context).height;
   }
 
   @override
   void didUpdateWidget(VibePickerSheet oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.minExtent != widget.minExtent &&
-        _sheetPosition < widget.minExtent) {
-      _sheetPosition = widget.minExtent;
+    if (oldWidget.minExtent != widget.minExtent) {
+      if (_sheetPosition < widget.minExtent) {
+        _sheetPosition = widget.minExtent;
+      }
+      // Sync the controller after the framework applies the new min/max.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _sheetController.isAttached) {
+          _sheetController.jumpTo(_sheetPosition);
+        }
+      });
     }
+    // Invalidate delegate cache if targetRows changed.
+    if (oldWidget.targetRows != widget.targetRows) {
+      _lastAvailableGridHeight = -1;
+    }
+  }
+
+  void _ensureGridDelegate(double availableGridHeight) {
+    if (availableGridHeight == _lastAvailableGridHeight &&
+        _gridDelegate != null) {
+      return;
+    }
+    _lastAvailableGridHeight = availableGridHeight;
+    _gridDelegate = SliverGridDelegateWithAdaptiveHeight(
+      availableGridHeight: availableGridHeight,
+      targetVisibleRows: widget.targetRows,
+    );
+    _gridIconSize = _gridDelegate!.scaledIconSize();
+    _gridTileScale = _gridDelegate!.scaleFactor;
   }
 
   @override
   void dispose() {
     _gridScrollController.dispose();
+    _sheetController.dispose();
     super.dispose();
   }
 
-  void _onHandleDrag(DragUpdateDetails details, double viewHeight) {
-    setState(() {
-      _sheetPosition -= details.delta.dy / viewHeight;
-      _sheetPosition = _sheetPosition.clamp(
-        widget.minExtent,
-        VibePickerSheet.kMaxExtent,
-      );
-    });
+  void _onHandleDrag(DragUpdateDetails details) {
+    _sheetPosition -= details.delta.dy / _cachedViewHeight;
+    _sheetPosition = _sheetPosition.clamp(
+      widget.minExtent,
+      VibePickerSheet.kMaxExtent,
+    );
+    _sheetController.jumpTo(_sheetPosition);
     widget.onExtentChanged?.call(_sheetPosition);
   }
 
@@ -135,106 +169,115 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
     final target = _sheetPosition > mid
         ? VibePickerSheet.kMaxExtent
         : widget.minExtent;
-    setState(() => _sheetPosition = target);
+    _sheetPosition = target;
+    _sheetController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
     widget.onExtentChanged?.call(_sheetPosition);
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final viewHeight = constraints.maxHeight;
+    final minSheetHeight = _cachedViewHeight * widget.minExtent;
+    final availableGridHeight =
+        minSheetHeight -
+        VibePickerSheet.kHandleHeight -
+        VibePickerSheet.kFooterBaseHeight -
+        _cachedSafeAreaBottom;
 
-        final minSheetHeight = viewHeight * widget.minExtent;
-        final availableGridHeight =
-            minSheetHeight -
-            VibePickerSheet.kHandleHeight -
-            VibePickerSheet.kFooterBaseHeight -
-            _cachedSafeAreaBottom;
+    _ensureGridDelegate(availableGridHeight);
+    final gridDelegate = _gridDelegate!;
+    final iconSize = _gridIconSize;
+    final tileScale = _gridTileScale;
 
-        final gridDelegate = SliverGridDelegateWithAdaptiveHeight(
-          availableGridHeight: availableGridHeight,
-          targetVisibleRows: widget.targetRows,
-        );
-        final iconSize = gridDelegate.scaledIconSize();
-        final tileScale = gridDelegate.scaleFactor;
-
-        return DraggableScrollableSheet(
-          key: ValueKey(widget.minExtent),
-          initialChildSize: _sheetPosition,
-          minChildSize: widget.minExtent,
-          maxChildSize: VibePickerSheet.kMaxExtent,
-          snap: true,
-          snapSizes: [widget.minExtent, VibePickerSheet.kMaxExtent],
-          builder: (context, scrollController) {
-            // scrollController is unused — the handle drives the sheet
-            // position manually, and the grid has its own controller.
-            return Container(
-              decoration: BoxDecoration(
-                color: widget.drawerBackground,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                children: [
-                  _DragHandle(
-                    color: widget.drawerBackground,
-                    onVerticalDragUpdate: (details) =>
-                        _onHandleDrag(details, viewHeight),
-                    onVerticalDragEnd: _onHandleDragEnd,
+    return DraggableScrollableSheet(
+      controller: _sheetController,
+      initialChildSize: _sheetPosition,
+      minChildSize: widget.minExtent,
+      maxChildSize: VibePickerSheet.kMaxExtent,
+      snap: true,
+      snapAnimationDuration: const Duration(milliseconds: 300),
+      snapSizes: [widget.minExtent, VibePickerSheet.kMaxExtent],
+      builder: (context, scrollController) {
+        // Attach the sheet's scrollController to a scrollable so
+        // DraggableScrollableController.jumpTo() can access a scroll
+        // position. NeverScrollableScrollPhysics prevents user scroll
+        // from interfering — the handle drives extent manually.
+        return CustomScrollView(
+          controller: scrollController,
+          physics: const NeverScrollableScrollPhysics(),
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: true,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: widget.drawerBackground,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
                   ),
+                ),
+                child: Column(
+                  children: [
+                    _DragHandle(
+                      color: widget.drawerBackground,
+                      onVerticalDragUpdate: _onHandleDrag,
+                      onVerticalDragEnd: _onHandleDragEnd,
+                    ),
 
-                  // Vibe grid with its own scroll controller — scrolls
-                  // independently of the sheet position.
-                  Expanded(
-                    child: ScrollConfiguration(
-                      behavior: ScrollConfiguration.of(context).copyWith(
-                        dragDevices: {
-                          PointerDeviceKind.touch,
-                          PointerDeviceKind.mouse,
-                          PointerDeviceKind.stylus,
-                          PointerDeviceKind.trackpad,
-                        },
-                      ),
-                      child: FadingEdgeScrollView.fromScrollView(
-                        child: CustomScrollView(
-                          controller: _gridScrollController,
-                          slivers: [
-                            SliverPadding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
-                              sliver: SliverGrid(
-                                gridDelegate: gridDelegate,
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) {
+                    // Vibe grid with its own scroll controller — scrolls
+                    // independently of the sheet position.
+                    Expanded(
+                      child: ScrollConfiguration(
+                        behavior: ScrollConfiguration.of(context).copyWith(
+                          dragDevices: {
+                            PointerDeviceKind.touch,
+                            PointerDeviceKind.mouse,
+                            PointerDeviceKind.stylus,
+                            PointerDeviceKind.trackpad,
+                          },
+                        ),
+                        child: FadingEdgeScrollView.fromScrollView(
+                          child: CustomScrollView(
+                            controller: _gridScrollController,
+                            slivers: [
+                              SliverPadding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                sliver: SliverGrid(
+                                  gridDelegate: gridDelegate,
+                                  delegate: SliverChildBuilderDelegate((
+                                    context,
+                                    index,
+                                  ) {
                                     return VibeOptionTile(
                                       vibe: widget.vibes[index],
                                       isSelected:
                                           widget.selectedIndex == index,
-                                      onTap: () =>
-                                          widget.onSelected(index),
-                                    iconSize: iconSize,
-                                    scale: tileScale,
+                                      onTap: () => widget.onSelected(index),
+                                      iconSize: iconSize,
+                                      scale: tileScale,
                                     );
-                                  },
-                                  childCount: widget.vibes.length,
+                                  }, childCount: widget.vibes.length),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
 
-                  Footer(
-                    backgroundColor: widget.footerBackground,
-                    onTap: widget.onDone,
-                  ),
-                ],
+                    Footer(
+                      backgroundColor: widget.footerBackground,
+                      onTap: widget.onDone,
+                    ),
+                  ],
+                ),
               ),
-            );
-          },
+            ),
+          ],
         );
       },
     );

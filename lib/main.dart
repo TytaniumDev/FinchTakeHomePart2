@@ -57,9 +57,11 @@ class VibeSelectionScreen extends StatefulWidget {
 
 class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
   int? _selectedVibeIndex;
-  double _parallaxOffset = 0;
-  double? _sheetExtent;
   BirdAge _birdAge = BirdAge.adult;
+
+  // Sheet extent driven by a ValueNotifier so only BirdViewArea rebuilds
+  // during drag, not the entire screen.
+  final _sheetExtentNotifier = ValueNotifier<double>(0.38);
 
   // Cached values — recomputed only when screen metrics change.
   double _computedMinExtent = 0.38;
@@ -82,29 +84,37 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
     );
     _computedMinExtent = result.extent;
     _computedTargetRows = result.targetRows;
-    if (_sheetExtent != null && _sheetExtent! < _computedMinExtent) {
-      _sheetExtent = _computedMinExtent;
+    if (_sheetExtentNotifier.value < _computedMinExtent) {
+      _sheetExtentNotifier.value = _computedMinExtent;
     }
+  }
+
+  @override
+  void dispose() {
+    _sheetExtentNotifier.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = _theme;
     final birdSize = _birdAge == BirdAge.adult ? 150.0 : 112.5;
-    final effectiveExtent = _sheetExtent ?? _computedMinExtent;
 
     return Scaffold(
       body: Stack(
         children: [
-          // Full-screen bird area (behind everything)
+          // Full-screen bird area (behind everything).
+          // Uses ValueListenableBuilder internally so only the bird
+          // position rebuilds during sheet drag — not the whole screen.
           Positioned.fill(
             child: BirdViewArea(
               backgroundColor: theme.birdAreaBackground,
               speechBubbleText: theme.speechBubbleText,
               birdAssetPath: theme.birdAssetPath(_birdAge),
               birdSize: birdSize,
-              parallaxOffset: _parallaxOffset,
-              sheetExtent: effectiveExtent,
+              sheetExtentNotifier: _sheetExtentNotifier,
+              minExtent: _computedMinExtent,
+              screenHeight: _screenHeight,
             ),
           ),
 
@@ -120,11 +130,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
             minExtent: _computedMinExtent,
             targetRows: _computedTargetRows,
             onExtentChanged: (extent) {
-              setState(() {
-                _sheetExtent = extent;
-                final dragDelta = extent - _computedMinExtent;
-                _parallaxOffset = -dragDelta * _screenHeight * 0.3;
-              });
+              _sheetExtentNotifier.value = extent;
             },
             onDone: () {
               // Handle done
@@ -139,18 +145,16 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      onPressed: () =>
-                          Navigator.pushNamed(context, '/debug'),
-                      icon:
-                          const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pushNamed(context, '/debug'),
+                      icon: const Icon(Icons.close, color: Colors.white),
                       style: IconButton.styleFrom(
-                          backgroundColor: Colors.black26),
+                        backgroundColor: Colors.black26,
+                      ),
                     ),
                     _buildBirdAgeToggle(),
                   ],

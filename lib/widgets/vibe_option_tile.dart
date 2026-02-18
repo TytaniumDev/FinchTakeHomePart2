@@ -42,7 +42,13 @@ class VibeOptionTile extends StatelessWidget {
                 color: Colors.white,
                 shape: BoxShape.circle,
               ),
-              child: Center(child: Icon(vibe.icon, color: Colors.grey, size: iconSize * 0.5)),
+              child: Center(
+                child: Icon(
+                  vibe.icon,
+                  color: Colors.grey,
+                  size: iconSize * 0.5,
+                ),
+              ),
             ),
             SizedBox(height: 8 * scale),
             Text(

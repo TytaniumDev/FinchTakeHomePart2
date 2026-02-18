@@ -10,7 +10,7 @@ import 'package:flutter/rendering.dart';
 /// tiles are capped at [maxTileHeight] so they never grow beyond the original
 /// design size.
 class SliverGridDelegateWithAdaptiveHeight extends SliverGridDelegate {
-  const SliverGridDelegateWithAdaptiveHeight({
+  SliverGridDelegateWithAdaptiveHeight({
     required this.availableGridHeight,
     this.crossAxisCount = 3,
     this.mainAxisSpacing = kDefaultMainAxisSpacing,
@@ -42,11 +42,12 @@ class SliverGridDelegateWithAdaptiveHeight extends SliverGridDelegate {
 
   static const double _minMainAxisSpacing = 2;
 
-  /// Computes tile height and effective spacing together.
+  /// Tile height and spacing, computed once on first access.
   ///
-  /// Strategy: shrink spacing first (down to [_minMainAxisSpacing]),
-  /// then shrink tiles only if still needed (down to [minTileHeight]).
-  ({double tileHeight, double spacing}) get _metrics {
+  /// Safe to cache because all inputs are final.
+  late final ({double tileHeight, double spacing}) _metrics = _computeMetrics();
+
+  ({double tileHeight, double spacing}) _computeMetrics() {
     final numGaps = targetVisibleRows.ceil() - 1;
 
     // 1. Try with full spacing — if tiles fit at max, no scaling needed.

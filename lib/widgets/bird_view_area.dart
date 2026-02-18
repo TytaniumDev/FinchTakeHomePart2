@@ -6,7 +6,10 @@ import 'speech_bubble.dart';
 /// Displays the bird and speech bubble.
 ///
 /// The bird's feet (bottom of the column) are anchored to the top edge of the
-/// draggable sheet. A [parallaxOffset] shifts the bird up as the sheet expands.
+/// draggable sheet. A parallax offset shifts the bird up as the sheet expands.
+///
+/// Uses a [ValueListenableBuilder] to rebuild only the positioning layer when
+/// the sheet extent changes during drag, avoiding a full parent rebuild.
 class BirdViewArea extends StatelessWidget {
   const BirdViewArea({
     super.key,
@@ -14,34 +17,43 @@ class BirdViewArea extends StatelessWidget {
     required this.speechBubbleText,
     required this.birdAssetPath,
     this.birdSize = 150,
-    this.parallaxOffset = 0,
-    required this.sheetExtent,
+    required this.sheetExtentNotifier,
+    required this.minExtent,
+    required this.screenHeight,
   });
 
   final Color backgroundColor;
   final String speechBubbleText;
   final String birdAssetPath;
   final double birdSize;
-  final double parallaxOffset;
-  final double sheetExtent;
+  final ValueNotifier<double> sheetExtentNotifier;
+  final double minExtent;
+  final double screenHeight;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableHeight = constraints.maxHeight;
-        // Position the column's bottom at the sheet's top edge, shifted by
-        // parallax. A small gap (8px) keeps the feet from touching the sheet.
-        final bottomOffset =
-            availableHeight * sheetExtent + parallaxOffset + 8;
 
         return Stack(
           children: [
             Container(color: backgroundColor),
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: bottomOffset,
+            ValueListenableBuilder<double>(
+              valueListenable: sheetExtentNotifier,
+              builder: (context, sheetExtent, child) {
+                final dragDelta = sheetExtent - minExtent;
+                final parallaxOffset = -dragDelta * screenHeight * 0.3;
+                final bottomOffset =
+                    availableHeight * sheetExtent + parallaxOffset + 8;
+
+                return Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: bottomOffset,
+                  child: child!,
+                );
+              },
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
