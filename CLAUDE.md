@@ -29,7 +29,12 @@ dart format lib/
 
 ## Architecture
 
-**State management:** Plain `StatefulWidget` — no Riverpod, Bloc, or Provider. All state lives in `_VibeSelectionScreenState` (lib/main.dart) and is passed down via constructor params and callbacks.
+**State management:** Plain `StatefulWidget` — no Riverpod, Bloc, or Provider. All state lives in `_VibeSelectionScreenState` (`lib/screens/vibe_selection_screen.dart`) and is passed down via constructor params and callbacks.
+
+**File structure:**
+- `lib/main.dart` — `main()` entry point only (DevicePreview + GoogleFonts config)
+- `lib/screens/vibes_screen.dart` — `VibesScreen` (MaterialApp, theme, route table)
+- `lib/screens/vibe_selection_screen.dart` — `VibeSelectionScreen` + state
 
 **Screen layout (`VibeSelectionScreen`):** A `Stack` with three layers:
 1. `BirdViewArea` — full-screen bird SVG + speech bubble, background color
@@ -49,7 +54,7 @@ dart format lib/
 
 **Theme colors:** Centralized in `lib/theme/colors.dart` (`VibeColors`).
 
-**Font:** Rubik via `google_fonts` package, configured in `main.dart` theme.
+**Font:** Rubik via `google_fonts` package, configured in `lib/screens/vibes_screen.dart` theme.
 
 ## Key Design Constraints (from requirements)
 
@@ -63,7 +68,7 @@ The close button navigates to `/debug` which shows `DebugPickerScreen` — a men
 - `/debug/bird` — bird SVG positioning tester
 - `/debug/sheet` — draggable sheet behavior tester
 
-New debug screens: add to `_kDebugEntries` in `debug_picker_screen.dart` and register the route in `main.dart`.
+New debug screens: add to `_kDebugEntries` in `debug_picker_screen.dart` and register the route in `lib/screens/vibes_screen.dart`.
 
 ## Key Dependencies
 
