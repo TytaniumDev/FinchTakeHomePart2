@@ -11,6 +11,7 @@ import 'widgets/bird_view_area.dart';
 import 'widgets/vibe_picker_sheet.dart';
 
 void main() {
+  GoogleFonts.config.allowRuntimeFetching = false;
   runApp(
     DevicePreview(enabled: true, builder: (context) => const VibesScreen()),
   );
@@ -65,8 +66,8 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
 
   // Cached values — recomputed only when screen metrics change.
   double _computedMinExtent = 0.38;
+  double _computedMaxExtent = 0.65;
   double _computedTargetRows = 1.4;
-  double _screenHeight = 800;
 
   VibeTheme get _theme {
     if (_selectedVibeIndex == null) return VibeTheme.magic;
@@ -76,17 +77,20 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _screenHeight = MediaQuery.sizeOf(context).height;
-    final safeAreaBottom = MediaQuery.paddingOf(context).bottom;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final padding = MediaQuery.paddingOf(context);
     final result = VibePickerSheet.computeMinExtent(
-      screenHeight: _screenHeight,
-      safeAreaBottom: safeAreaBottom,
+      screenHeight: screenHeight,
+      safeAreaBottom: padding.bottom,
     );
     _computedMinExtent = result.extent;
     _computedTargetRows = result.targetRows;
-    if (_sheetExtentNotifier.value < _computedMinExtent) {
-      _sheetExtentNotifier.value = _computedMinExtent;
-    }
+    _computedMaxExtent = VibePickerSheet.computeMaxExtent(
+      screenHeight: screenHeight,
+      safeAreaTop: padding.top,
+      minExtent: _computedMinExtent,
+    );
+    _sheetExtentNotifier.value = _computedMinExtent;
   }
 
   @override
@@ -99,6 +103,20 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
   Widget build(BuildContext context) {
     final theme = _theme;
     final birdSize = _birdAge == BirdAge.adult ? 150.0 : 112.5;
+
+    // Pre-compute values for the proximity-based app bar fade.
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final safeAreaTop = MediaQuery.paddingOf(context).top;
+    // App bar: SafeArea(top) + 8px padding + 48px IconButton + 8px padding.
+    final appBarBottom = safeAreaTop + 64;
+    // Mirror BirdViewArea's restGap: center, but cap for app bar visibility.
+    final leftover = screenHeight * (1 - _computedMinExtent) -
+        appBarBottom -
+        BirdViewArea.kBirdColumnHeight;
+    final maxGap = (leftover - BirdViewArea.kFadeRange)
+        .clamp(BirdViewArea.kMinRestGap, double.infinity);
+    final restGap =
+        (leftover / 2).clamp(BirdViewArea.kMinRestGap, maxGap);
 
     return Scaffold(
       body: Stack(
@@ -114,7 +132,8 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
               birdSize: birdSize,
               sheetExtentNotifier: _sheetExtentNotifier,
               minExtent: _computedMinExtent,
-              screenHeight: _screenHeight,
+              maxExtent: _computedMaxExtent,
+              topReserved: appBarBottom,
             ),
           ),
 
@@ -128,6 +147,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
             drawerBackground: theme.drawerBackground,
             footerBackground: theme.footerBackground,
             minExtent: _computedMinExtent,
+            maxExtent: _computedMaxExtent,
             targetRows: _computedTargetRows,
             onExtentChanged: (extent) {
               _sheetExtentNotifier.value = extent;
@@ -137,27 +157,52 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
             },
           ),
 
-          // Fixed transparent app bar with close button and age toggle
+          // Fixed transparent app bar — fades as bird column approaches it
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.pushNamed(context, '/debug'),
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.black26,
+            child: ValueListenableBuilder<double>(
+              valueListenable: _sheetExtentNotifier,
+              builder: (context, sheetExtent, child) {
+                // Replicate BirdViewArea gap logic to find column top.
+                final range = _computedMaxExtent - _computedMinExtent;
+                final t = range > 0
+                    ? ((sheetExtent - _computedMinExtent) / range)
+                        .clamp(0.0, 1.0)
+                    : 0.0;
+                final gap =
+                    restGap + (BirdViewArea.kMaxExtentGap - restGap) * t;
+                final birdColumnTop = screenHeight * (1 - sheetExtent) -
+                    gap -
+                    BirdViewArea.kBirdColumnHeight;
+                final distance = birdColumnTop - appBarBottom;
+                final opacity =
+                    (distance / BirdViewArea.kFadeRange).clamp(0.0, 1.0);
+                return IgnorePointer(
+                  ignoring: opacity < 0.1,
+                  child: Opacity(opacity: opacity, child: child),
+                );
+              },
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/debug'),
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black26,
+                        ),
                       ),
-                    ),
-                    _buildBirdAgeToggle(),
-                  ],
+                      _buildBirdAgeToggle(),
+                    ],
+                  ),
                 ),
               ),
             ),

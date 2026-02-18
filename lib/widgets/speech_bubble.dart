@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../theme/animation.dart';
+import 'animated_typed_text.dart';
+
 /// A speech bubble with a tail, displaying [text].
 class SpeechBubble extends StatelessWidget {
   const SpeechBubble({super.key, required this.text});
@@ -9,42 +12,34 @@ class SpeechBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      switchInCurve: Curves.easeInOut,
-      switchOutCurve: Curves.easeInOut,
-      layoutBuilder: (currentChild, previousChildren) {
-        return Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            ...previousChildren,
-            ?currentChild,
-          ],
-        );
-      },
-      child: Column(
-        key: ValueKey(text),
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: AnimatedSize(
+            duration: kVibeTransitionDuration,
+            curve: kVibeTransitionCurve,
+            alignment: Alignment.topCenter,
+            clipBehavior: Clip.none,
+            child: AnimatedTypedText(
+              text: text,
+              startDelay: const Duration(milliseconds: 100),
             ),
-            child: Text(text),
           ),
-          // Tail pointing down toward the bird
-          SvgPicture.asset(
-            'assets/speech-bubble-tail.svg',
-            width: 16,
-            height: 8,
-            colorFilter:
-                const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-          ),
-        ],
-      ),
+        ),
+        // Tail pointing down toward the bird
+        SvgPicture.asset(
+          'assets/speech-bubble-tail.svg',
+          width: 16,
+          height: 10,
+        ),
+      ],
     );
   }
 }

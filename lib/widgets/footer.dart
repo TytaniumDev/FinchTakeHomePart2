@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/animation.dart';
+
 /// Footer bar with the "Done" / "Upgrade to send" button.
 class Footer extends StatelessWidget {
   const Footer({super.key, required this.backgroundColor, this.onTap});
@@ -9,7 +11,9 @@ class Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AnimatedContainer(
+      duration: kVibeTransitionDuration,
+      curve: kVibeTransitionCurve,
       width: double.infinity,
       padding: EdgeInsets.only(
         left: 24,

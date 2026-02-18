@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../theme/animation.dart';
 import 'speech_bubble.dart';
 
 /// Displays the bird and speech bubble.
 ///
-/// The bird's feet (bottom of the column) are anchored to the top edge of the
-/// draggable sheet. A parallax offset shifts the bird up as the sheet expands.
+/// The bird column is centered in the space above the sheet at rest, with a gap
+/// that shrinks to 4px at max extent. On small screens where centering would
+/// leave less than 12px, the gap floors at 12px.
 ///
 /// Uses a [ValueListenableBuilder] to rebuild only the positioning layer when
 /// the sheet extent changes during drag, avoiding a full parent rebuild.
@@ -19,8 +21,16 @@ class BirdViewArea extends StatelessWidget {
     this.birdSize = 150,
     required this.sheetExtentNotifier,
     required this.minExtent,
-    required this.screenHeight,
+    required this.maxExtent,
+    required this.topReserved,
   });
+
+  // Approximate height of the bird column (speech bubble + gap + bird container).
+  // Must stay in sync with the Column layout in build().
+  static const double kBirdColumnHeight = 80 + 4 + 150; // 234
+  static const double kMinRestGap = 12.0;
+  static const double kMaxExtentGap = 4.0;
+  static const double kFadeRange = 40.0;
 
   final Color backgroundColor;
   final String speechBubbleText;
@@ -28,7 +38,11 @@ class BirdViewArea extends StatelessWidget {
   final double birdSize;
   final ValueNotifier<double> sheetExtentNotifier;
   final double minExtent;
-  final double screenHeight;
+  final double maxExtent;
+
+  /// Space reserved at the top of the screen (safe area + app bar).
+  /// The bird column is centered between this and the sheet top.
+  final double topReserved;
 
   @override
   Widget build(BuildContext context) {
@@ -36,16 +50,30 @@ class BirdViewArea extends StatelessWidget {
       builder: (context, constraints) {
         final availableHeight = constraints.maxHeight;
 
+        // Center the bird between app bar and sheet, but cap so the bird
+        // top stays at least kFadeRange below topReserved (app bar visible).
+        final leftover =
+            availableHeight * (1 - minExtent) - topReserved - kBirdColumnHeight;
+        final maxGap =
+            (leftover - kFadeRange).clamp(kMinRestGap, double.infinity);
+        final restGap = (leftover / 2).clamp(kMinRestGap, maxGap);
+
         return Stack(
           children: [
-            Container(color: backgroundColor),
+            AnimatedContainer(
+              duration: kVibeTransitionDuration,
+              curve: kVibeTransitionCurve,
+              color: backgroundColor,
+            ),
             ValueListenableBuilder<double>(
               valueListenable: sheetExtentNotifier,
               builder: (context, sheetExtent, child) {
-                final dragDelta = sheetExtent - minExtent;
-                final parallaxOffset = -dragDelta * screenHeight * 0.3;
-                final bottomOffset =
-                    availableHeight * sheetExtent + parallaxOffset + 8;
+                final range = maxExtent - minExtent;
+                final t = range > 0
+                    ? ((sheetExtent - minExtent) / range).clamp(0.0, 1.0)
+                    : 0.0;
+                final gap = restGap + (kMaxExtentGap - restGap) * t;
+                final bottomOffset = availableHeight * sheetExtent + gap;
 
                 return Positioned(
                   left: 16,
@@ -57,13 +85,7 @@ class BirdViewArea extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    alignment: Alignment.bottomCenter,
-                    clipBehavior: Clip.none,
-                    child: SpeechBubble(text: speechBubbleText),
-                  ),
+                  SpeechBubble(text: speechBubbleText),
                   const SizedBox(height: 4),
                   SizedBox(
                     height: 150,

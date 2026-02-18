@@ -4,17 +4,17 @@ import 'package:fading_edge_scrollview/fading_edge_scrollview.dart';
 import 'package:flutter/material.dart';
 
 import '../models/vibe_data.dart';
+import '../theme/animation.dart';
 import 'adaptive_grid_delegate.dart';
 import 'footer.dart';
 import 'vibe_option_tile.dart';
 
 /// A draggable bottom sheet that contains the vibe picker grid and footer.
 ///
-/// Uses the desktop/web pattern from Flutter's official example: the drag
-/// handle has a [GestureDetector] that manually drives `initialChildSize`,
-/// while the vibe grid scrolls independently with its own controller.
-/// The [Footer] sits below the grid in a [Column] so the grid is
-/// hard-clipped at the bottom for a clean fading edge.
+/// The grid's scroll controller is the sheet's own controller, so scrolling
+/// up expands the sheet first (until max), then scrolls content; scrolling
+/// down collapses the sheet first (until min), then stops. The drag handle
+/// also drives extent via a manual [GestureDetector].
 class VibePickerSheet extends StatefulWidget {
   const VibePickerSheet({
     super.key,
@@ -24,16 +24,39 @@ class VibePickerSheet extends StatefulWidget {
     required this.drawerBackground,
     required this.footerBackground,
     required this.minExtent,
+    required this.maxExtent,
     required this.targetRows,
     this.onExtentChanged,
     this.onDone,
   });
 
-  static const double kMaxExtent = 0.65;
   static const double kMinExtentFloor = 0.3;
   static const double kMinExtentCeiling = 0.45;
   static const double kHandleHeight = 24.0;
   static const double kFooterBaseHeight = 80.0;
+
+  // Layout constants for computing max extent.
+  static const double _kTopMargin = 12;
+  static const double _kSpeechBubbleHeight = 80;
+  static const double _kBubbleToBirdGap = 4;
+  static const double _kBirdContainerHeight = 150;
+  static const double _kMinGapToSheet = 4;
+
+  /// Computes the dynamic max extent so the bird column always fits above
+  /// the sheet. Clamped to [minExtent + 0.05, 0.70].
+  static double computeMaxExtent({
+    required double screenHeight,
+    required double safeAreaTop,
+    required double minExtent,
+  }) {
+    const reservedAbove = _kTopMargin +
+        _kSpeechBubbleHeight +
+        _kBubbleToBirdGap +
+        _kBirdContainerHeight +
+        _kMinGapToSheet;
+    final maxExtent = 1.0 - (safeAreaTop + reservedAbove) / screenHeight;
+    return maxExtent.clamp(minExtent + 0.05, 0.70);
+  }
 
   /// Computes the dynamic min extent and target rows for a given screen.
   ///
@@ -79,6 +102,7 @@ class VibePickerSheet extends StatefulWidget {
   final Color drawerBackground;
   final Color footerBackground;
   final double minExtent;
+  final double maxExtent;
   final double targetRows;
   final ValueChanged<double>? onExtentChanged;
   final VoidCallback? onDone;
@@ -89,7 +113,6 @@ class VibePickerSheet extends StatefulWidget {
 
 class _VibePickerSheetState extends State<VibePickerSheet> {
   late double _sheetPosition;
-  final _gridScrollController = ScrollController();
   final _sheetController = DraggableScrollableController();
   double _cachedSafeAreaBottom = 0;
   double _cachedViewHeight = 0;
@@ -104,6 +127,16 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
   void initState() {
     super.initState();
     _sheetPosition = widget.minExtent;
+    _sheetController.addListener(_onSheetExtentChanged);
+  }
+
+  void _onSheetExtentChanged() {
+    if (!_sheetController.isAttached) return;
+    final size = _sheetController.size;
+    if (size != _sheetPosition) {
+      _sheetPosition = size;
+      widget.onExtentChanged?.call(size);
+    }
   }
 
   @override
@@ -116,10 +149,9 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
   @override
   void didUpdateWidget(VibePickerSheet oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.minExtent != widget.minExtent) {
-      if (_sheetPosition < widget.minExtent) {
-        _sheetPosition = widget.minExtent;
-      }
+    if (oldWidget.minExtent != widget.minExtent ||
+        oldWidget.maxExtent != widget.maxExtent) {
+      _sheetPosition = widget.minExtent;
       // Sync the controller after the framework applies the new min/max.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _sheetController.isAttached) {
@@ -149,7 +181,7 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
 
   @override
   void dispose() {
-    _gridScrollController.dispose();
+    _sheetController.removeListener(_onSheetExtentChanged);
     _sheetController.dispose();
     super.dispose();
   }
@@ -158,24 +190,14 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
     _sheetPosition -= details.delta.dy / _cachedViewHeight;
     _sheetPosition = _sheetPosition.clamp(
       widget.minExtent,
-      VibePickerSheet.kMaxExtent,
+      widget.maxExtent,
     );
     _sheetController.jumpTo(_sheetPosition);
     widget.onExtentChanged?.call(_sheetPosition);
   }
 
   void _onHandleDragEnd(DragEndDetails details) {
-    final mid = (widget.minExtent + VibePickerSheet.kMaxExtent) / 2;
-    final target = _sheetPosition > mid
-        ? VibePickerSheet.kMaxExtent
-        : widget.minExtent;
-    _sheetPosition = target;
-    _sheetController.animateTo(
-      target,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-    widget.onExtentChanged?.call(_sheetPosition);
+    // No-op — sheet stays at current position, no snapping.
   }
 
   @override
@@ -196,88 +218,69 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
       controller: _sheetController,
       initialChildSize: _sheetPosition,
       minChildSize: widget.minExtent,
-      maxChildSize: VibePickerSheet.kMaxExtent,
-      snap: true,
-      snapAnimationDuration: const Duration(milliseconds: 300),
-      snapSizes: [widget.minExtent, VibePickerSheet.kMaxExtent],
+      maxChildSize: widget.maxExtent,
       builder: (context, scrollController) {
-        // Attach the sheet's scrollController to a scrollable so
-        // DraggableScrollableController.jumpTo() can access a scroll
-        // position. NeverScrollableScrollPhysics prevents user scroll
-        // from interfering — the handle drives extent manually.
-        return CustomScrollView(
-          controller: scrollController,
-          physics: const NeverScrollableScrollPhysics(),
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: true,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: widget.drawerBackground,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(24),
+        return AnimatedContainer(
+          duration: kVibeTransitionDuration,
+          curve: kVibeTransitionCurve,
+          decoration: BoxDecoration(
+            color: widget.drawerBackground,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(24),
+            ),
+          ),
+          child: Column(
+            children: [
+              _DragHandle(
+                color: widget.drawerBackground,
+                onVerticalDragUpdate: _onHandleDrag,
+                onVerticalDragEnd: _onHandleDragEnd,
+              ),
+              Expanded(
+                child: ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(context).copyWith(
+                    dragDevices: {
+                      PointerDeviceKind.touch,
+                      PointerDeviceKind.mouse,
+                      PointerDeviceKind.stylus,
+                      PointerDeviceKind.trackpad,
+                    },
                   ),
-                ),
-                child: Column(
-                  children: [
-                    _DragHandle(
-                      color: widget.drawerBackground,
-                      onVerticalDragUpdate: _onHandleDrag,
-                      onVerticalDragEnd: _onHandleDragEnd,
-                    ),
-
-                    // Vibe grid with its own scroll controller — scrolls
-                    // independently of the sheet position.
-                    Expanded(
-                      child: ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(context).copyWith(
-                          dragDevices: {
-                            PointerDeviceKind.touch,
-                            PointerDeviceKind.mouse,
-                            PointerDeviceKind.stylus,
-                            PointerDeviceKind.trackpad,
-                          },
-                        ),
-                        child: FadingEdgeScrollView.fromScrollView(
-                          child: CustomScrollView(
-                            controller: _gridScrollController,
-                            slivers: [
-                              SliverPadding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                sliver: SliverGrid(
-                                  gridDelegate: gridDelegate,
-                                  delegate: SliverChildBuilderDelegate((
-                                    context,
-                                    index,
-                                  ) {
-                                    return VibeOptionTile(
-                                      vibe: widget.vibes[index],
-                                      isSelected:
-                                          widget.selectedIndex == index,
-                                      onTap: () => widget.onSelected(index),
-                                      iconSize: iconSize,
-                                      scale: tileScale,
-                                    );
-                                  }, childCount: widget.vibes.length),
-                                ),
-                              ),
-                            ],
+                  child: FadingEdgeScrollView.fromScrollView(
+                    child: CustomScrollView(
+                      controller: scrollController,
+                      slivers: [
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                          ),
+                          sliver: SliverGrid(
+                            gridDelegate: gridDelegate,
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              return VibeOptionTile(
+                                vibe: widget.vibes[index],
+                                isSelected: widget.selectedIndex == index,
+                                onTap: () => widget.onSelected(index),
+                                iconSize: iconSize,
+                                scale: tileScale,
+                              );
+                            }, childCount: widget.vibes.length),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-
-                    Footer(
-                      backgroundColor: widget.footerBackground,
-                      onTap: widget.onDone,
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+              Footer(
+                backgroundColor: widget.footerBackground,
+                onTap: widget.onDone,
+              ),
+            ],
+          ),
         );
       },
     );
@@ -302,7 +305,9 @@ class _DragHandle extends StatelessWidget {
     return GestureDetector(
       onVerticalDragUpdate: onVerticalDragUpdate,
       onVerticalDragEnd: onVerticalDragEnd,
-      child: Container(
+      child: AnimatedContainer(
+        duration: kVibeTransitionDuration,
+        curve: kVibeTransitionCurve,
         height: 24,
         color: color,
         alignment: Alignment.center,

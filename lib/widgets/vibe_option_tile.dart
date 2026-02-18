@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/vibe_data.dart';
+import '../theme/animation.dart';
 
 /// A single vibe option tile showing an icon and label.
 class VibeOptionTile extends StatelessWidget {
@@ -24,7 +25,9 @@ class VibeOptionTile extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: kVibeTransitionDuration,
+        curve: Curves.easeInOut,
         padding: EdgeInsets.all(8 * scale),
         decoration: BoxDecoration(
           color: isSelected
