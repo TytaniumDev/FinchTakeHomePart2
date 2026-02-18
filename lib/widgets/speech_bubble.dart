@@ -34,10 +34,13 @@ class SpeechBubble extends StatelessWidget {
           ),
         ),
         // Tail pointing down toward the bird
-        SvgPicture.asset(
-          'assets/speech-bubble-tail.svg',
-          width: 16,
-          height: 10,
+        Transform.translate(
+          offset: const Offset(-25, -1),
+          child: SvgPicture.asset(
+            'assets/speech-bubble-tail.svg',
+            width: 16,
+            height: 10,
+          ),
         ),
       ],
     );

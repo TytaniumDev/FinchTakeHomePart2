@@ -22,6 +22,9 @@ class VibeOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final baseColor = VibeTheme.fromType(vibe.type).birdAreaBackground;
+    final themeColor = Color.lerp(baseColor, Colors.white, 0.05);
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -38,17 +41,20 @@ class VibeOptionTile extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
+            AnimatedContainer(
+              duration: kVibeTransitionDuration,
+              curve: Curves.easeInOut,
               width: iconSize,
               height: iconSize,
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.white : themeColor,
+                border: Border.all(color: Colors.white, width: 2),
                 shape: BoxShape.circle,
               ),
               child: Center(
                 child: Icon(
                   vibe.icon,
-                  color: Colors.grey,
+                  color: isSelected ? themeColor : Colors.white,
                   size: iconSize * 0.5,
                 ),
               ),
