@@ -160,6 +160,8 @@ class BirdViewArea extends StatelessWidget {
         // Pre-build SVG widget (doesn't rebuild during drag).
         final svgWidget = AnimatedSwitcher(
           duration: kVibeTransitionDuration,
+          switchInCurve: kStandardCurve,
+          switchOutCurve: kStandardCurve,
           child: SvgPicture.asset(
             backgroundAssetPath,
             key: ValueKey(backgroundAssetPath),
@@ -180,7 +182,7 @@ class BirdViewArea extends StatelessWidget {
             // Sky color fills gap above SVG.
             AnimatedContainer(
               duration: kVibeTransitionDuration,
-              curve: kVibeTransitionCurve,
+              curve: kStandardCurve,
               color: skyColor,
             ),
             // SVG background + bird, both repositioned on each drag frame.

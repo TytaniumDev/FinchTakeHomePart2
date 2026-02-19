@@ -17,7 +17,7 @@ class Footer extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: kVibeTransitionDuration,
-      curve: kVibeTransitionCurve,
+      curve: kStandardCurve,
       width: double.infinity,
       padding: EdgeInsets.only(
         left: _kFooterHorizontalPadding,

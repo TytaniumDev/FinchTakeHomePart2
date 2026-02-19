@@ -239,7 +239,7 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
       builder: (context, scrollController) {
         return AnimatedContainer(
           duration: kVibeTransitionDuration,
-          curve: kVibeTransitionCurve,
+          curve: kStandardCurve,
           decoration: BoxDecoration(
             color: widget.drawerBackground,
             borderRadius: const BorderRadius.vertical(
@@ -330,7 +330,7 @@ class _DragHandle extends StatelessWidget {
       onVerticalDragEnd: onVerticalDragEnd,
       child: AnimatedContainer(
         duration: kVibeTransitionDuration,
-        curve: kVibeTransitionCurve,
+        curve: kStandardCurve,
         height: VibePickerSheet.kHandleHeight,
         color: backgroundColor,
         alignment: Alignment.center,

@@ -94,7 +94,7 @@ class _BubbleBody extends StatelessWidget {
       ),
       child: AnimatedSize(
         duration: kVibeTransitionDuration,
-        curve: kVibeTransitionCurve,
+        curve: kBouncyCurve,
         alignment: Alignment.topCenter,
         clipBehavior: Clip.none,
         child: AnimatedTypedText(

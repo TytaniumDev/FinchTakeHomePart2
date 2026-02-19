@@ -56,7 +56,7 @@ class VibeOptionTile extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: kVibeTransitionDuration,
-        curve: Curves.easeInOut,
+        curve: kStandardCurve,
         padding: EdgeInsets.all(8 * scale),
         decoration: BoxDecoration(
           color: isSelected ? _kSelectedBackgroundColor : Colors.transparent,
@@ -67,7 +67,7 @@ class VibeOptionTile extends StatelessWidget {
           children: [
             AnimatedContainer(
               duration: kVibeTransitionDuration,
-              curve: Curves.easeInOut,
+              curve: kStandardCurve,
               width: iconSize,
               height: iconSize,
               decoration: BoxDecoration(
