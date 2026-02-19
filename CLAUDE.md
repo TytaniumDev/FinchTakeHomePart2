@@ -35,6 +35,10 @@ dart format lib/
 - `lib/main.dart` — `main()` entry point only (DevicePreview + GoogleFonts config)
 - `lib/screens/vibes_screen.dart` — `VibesScreen` (MaterialApp, theme, route table)
 - `lib/screens/vibe_selection_screen.dart` — `VibeSelectionScreen` + state
+- `lib/widgets/` — `bird_view_area`, `vibe_picker_sheet`, `speech_bubble`, `animated_typed_text`, `vibe_option_tile`, `footer`, `adaptive_grid_delegate`
+- `lib/models/` — `vibe_data` (VibeOption, VibeType, BirdAge, VibeTheme, kDefaultVibes), `bird_anchor_data` (per-asset mouth/bubble anchor points)
+- `lib/theme/` — `colors` (VibeColors), `animation` (shared transition duration/curve)
+- `lib/debug/` — isolated test screens (bird positioning, sheet behavior, grid scaling, anchor calibration)
 
 **Screen layout (`VibeSelectionScreen`):** A `Stack` with three layers:
 1. `BirdViewArea` — full-screen bird SVG + speech bubble, background color
@@ -46,10 +50,10 @@ dart format lib/
 **Draggable sheet:** `VibePickerSheet` uses `DraggableScrollableSheet` but the drag handle is driven by a manual `GestureDetector`, not the sheet's built-in scroll controller. Min/max extents are computed dynamically based on screen size (no snapping — the sheet stays wherever the user releases it). The vibe grid scrolls via the sheet's built-in scroll controller.
 
 **Data model (`lib/models/vibe_data.dart`):**
-- `VibeOption` — single selectable vibe (label, Material `IconData`, `VibeType`)
+- `VibeOption` — single selectable vibe (label, `VibeType`)
 - `VibeType` enum — `magic` or `newYears`
-- `BirdAge` enum — `baby` or `adult`
-- `VibeTheme` — maps a `VibeType` to colors, speech text, and bird asset path
+- `BirdAge` enum — `baby` or `adult` (with size constants)
+- `VibeTheme` — maps a `VibeType` to colors, speech text, bird/background/icon SVG asset paths, and sky color
 - `kDefaultVibes` — the 18-item constant list powering the grid
 
 **Theme colors:** Centralized in `lib/theme/colors.dart` (`VibeColors`).
