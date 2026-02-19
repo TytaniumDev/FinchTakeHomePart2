@@ -12,4 +12,8 @@ class VibeColors {
   static const Color newYearsDrawerBackground = Color.fromRGBO(58, 71, 84, 1);
   static const Color newYearsFooterBackground = Color.fromRGBO(77, 88, 99, 1);
   static const Color newYearsBirdAreaBackground = Color.fromRGBO(77, 88, 99, 1);
+
+  // Sky colors (fill gap above background SVG)
+  static const Color magicSkyColor = Color(0xFFFFDCB2);
+  static const Color newYearsSkyColor = Color(0xFF093663);
 }

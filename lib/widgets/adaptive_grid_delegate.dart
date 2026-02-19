@@ -12,16 +12,30 @@ import 'package:flutter/rendering.dart';
 class SliverGridDelegateWithAdaptiveHeight extends SliverGridDelegate {
   SliverGridDelegateWithAdaptiveHeight({
     required this.availableGridHeight,
-    this.crossAxisCount = 3,
+    this.crossAxisCount = kDefaultCrossAxisCount,
     this.mainAxisSpacing = kDefaultMainAxisSpacing,
-    this.crossAxisSpacing = 8,
-    this.targetVisibleRows = 1.4,
+    this.crossAxisSpacing = kDefaultCrossAxisSpacing,
+    this.targetVisibleRows = kDefaultTargetVisibleRows,
     this.maxTileHeight = kDefaultMaxTileHeight,
-    this.minTileHeight = 84,
+    this.minTileHeight = kDefaultMinTileHeight,
   });
 
   static const double kDefaultMaxTileHeight = 128;
   static const double kDefaultMainAxisSpacing = 8;
+  static const int kDefaultCrossAxisCount = 3;
+  static const double kDefaultCrossAxisSpacing = 8.0;
+
+  /// 1 full row + 40% peek of the next row.
+  static const double kDefaultTargetVisibleRows = 1.4;
+
+  /// Minimum tile height — prevents content overflow on very small screens.
+  static const double kDefaultMinTileHeight = 84.0;
+
+  /// Default icon size at full tile height (used by [scaledIconSize]).
+  static const double kDefaultBaseIconSize = 64.0;
+
+  /// Minimum icon size regardless of scale (prevents icons from becoming unusable).
+  static const double kDefaultMinIconSize = 48.0;
 
   /// The height available for the grid at min extent (worst case).
   final double availableGridHeight;
@@ -100,8 +114,11 @@ class SliverGridDelegateWithAdaptiveHeight extends SliverGridDelegate {
   double get scaleFactor => _metrics.tileHeight / maxTileHeight;
 
   /// Returns the icon size scaled proportionally to tile height.
-  /// Base: 64px icon at 128px tile height. Floored at [minIconSize].
-  double scaledIconSize({double baseIconSize = 64, double minIconSize = 48}) {
+  /// Base: [kDefaultBaseIconSize] at [kDefaultMaxTileHeight]. Floored at [minIconSize].
+  double scaledIconSize({
+    double baseIconSize = kDefaultBaseIconSize,
+    double minIconSize = kDefaultMinIconSize,
+  }) {
     return math.max(baseIconSize * scaleFactor, minIconSize);
   }
 

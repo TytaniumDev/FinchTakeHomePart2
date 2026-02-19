@@ -3,8 +3,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../models/bird_anchor_data.dart';
 
-enum _TapMode { mouth, safeArea }
-
 class BirdAnchorCalibrationScreen extends StatefulWidget {
   const BirdAnchorCalibrationScreen({super.key});
 
@@ -12,6 +10,10 @@ class BirdAnchorCalibrationScreen extends StatefulWidget {
   State<BirdAnchorCalibrationScreen> createState() =>
       _BirdAnchorCalibrationScreenState();
 }
+
+// ── Private helpers ────────────────────────────────────────────────────────────
+
+enum _TapMode { mouth, safeArea }
 
 class _BirdAnchorCalibrationScreenState
     extends State<BirdAnchorCalibrationScreen> {

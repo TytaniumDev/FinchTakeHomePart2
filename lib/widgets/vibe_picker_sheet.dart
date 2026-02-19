@@ -36,6 +36,12 @@ class VibePickerSheet extends StatefulWidget {
   static const double kHandleHeight = 24.0;
   static const double kFooterBaseHeight = 80.0;
 
+  /// Corner radius of the top of the sheet.
+  static const double kSheetTopBorderRadius = 24.0;
+
+  /// Horizontal padding applied to the vibe grid inside the sheet.
+  static const double kGridHorizontalPadding = 16.0;
+
   // Layout constants for computing max extent.
   static const double _kTopMargin = 12;
   static const double _kSpeechBubbleHeight = 80;
@@ -43,8 +49,21 @@ class VibePickerSheet extends StatefulWidget {
   static const double _kBirdContainerHeight = BirdViewArea.kBirdContainerHeight;
   static const double _kMinGapToSheet = 4;
 
+  // Extent computation constants.
+  /// Minimum buffer between min and max extent (prevents them from colliding).
+  static const double _kMaxExtentMinBuffer = 0.05;
+
+  /// Absolute ceiling for max extent regardless of screen size.
+  static const double _kMaxExtentAbsoluteCeiling = 0.70;
+
+  /// Maximum number of full rows checked when computing min extent.
+  static const int _kMaxRowsToCheck = 6;
+
+  /// Fraction of the next row that peeks above the fold (e.g. 0.4 = 40%).
+  static const double _kRowPeekFraction = 0.4;
+
   /// Computes the dynamic max extent so the bird column always fits above
-  /// the sheet. Clamped to [minExtent + 0.05, 0.70].
+  /// the sheet. Clamped to [minExtent + _kMaxExtentMinBuffer, _kMaxExtentAbsoluteCeiling].
   static double computeMaxExtent({
     required double screenHeight,
     required double safeAreaTop,
@@ -57,13 +76,16 @@ class VibePickerSheet extends StatefulWidget {
         _kBirdContainerHeight +
         _kMinGapToSheet;
     final maxExtent = 1.0 - (safeAreaTop + reservedAbove) / screenHeight;
-    return maxExtent.clamp(minExtent + 0.05, 0.70);
+    return maxExtent.clamp(
+      minExtent + _kMaxExtentMinBuffer,
+      _kMaxExtentAbsoluteCeiling,
+    );
   }
 
   /// Computes the dynamic min extent and target rows for a given screen.
   ///
-  /// Finds the largest N (full rows) where showing N rows + 40% of the next
-  /// row keeps the sheet extent within [kMinExtentFloor, kMinExtentCeiling].
+  /// Finds the largest N (full rows) where showing N rows + [_kRowPeekFraction]
+  /// of the next row keeps the sheet extent within [kMinExtentFloor, kMinExtentCeiling].
   static ({double extent, double targetRows}) computeMinExtent({
     required double screenHeight,
     required double safeAreaBottom,
@@ -75,8 +97,8 @@ class VibePickerSheet extends StatefulWidget {
 
     // Try increasing N from 1 upward; find the largest that fits.
     int bestN = 0;
-    for (int n = 1; n <= 6; n++) {
-      final gridHeight = (n + 0.4) * maxTile + n * spacing;
+    for (int n = 1; n <= _kMaxRowsToCheck; n++) {
+      final gridHeight = (n + _kRowPeekFraction) * maxTile + n * spacing;
       final extent = (overhead + gridHeight) / screenHeight;
       if (extent <= kMinExtentCeiling) {
         bestN = n;
@@ -87,15 +109,15 @@ class VibePickerSheet extends StatefulWidget {
 
     if (bestN == 0) {
       // Very small screen — use ceiling with fallback rows.
-      return (extent: kMinExtentCeiling, targetRows: 1.4);
+      return (extent: kMinExtentCeiling, targetRows: 1 + _kRowPeekFraction);
     }
 
-    final gridHeight = (bestN + 0.4) * maxTile + bestN * spacing;
+    final gridHeight = (bestN + _kRowPeekFraction) * maxTile + bestN * spacing;
     final extent = ((overhead + gridHeight) / screenHeight).clamp(
       kMinExtentFloor,
       kMinExtentCeiling,
     );
-    return (extent: extent, targetRows: bestN + 0.4);
+    return (extent: extent, targetRows: bestN + _kRowPeekFraction);
   }
 
   final List<VibeOption> vibes;
@@ -220,7 +242,9 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
           curve: kVibeTransitionCurve,
           decoration: BoxDecoration(
             color: widget.drawerBackground,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(VibePickerSheet.kSheetTopBorderRadius),
+            ),
           ),
           child: Column(
             children: [
@@ -245,7 +269,9 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
                       controller: scrollController,
                       slivers: [
                         SliverPadding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: VibePickerSheet.kGridHorizontalPadding,
+                          ),
                           sliver: SliverGrid(
                             gridDelegate: gridDelegate,
                             delegate: SliverChildBuilderDelegate((
@@ -279,6 +305,11 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
   }
 }
 
+// Pill indicator dimensions inside _DragHandle.
+const _kHandlePillWidth = 36.0;
+const _kHandlePillHeight = 4.0;
+const _kHandlePillRadius = 2.0;
+
 /// The pill-shaped drag indicator at the top of the sheet.
 /// Accepts vertical drag gestures to drive the sheet position.
 class _DragHandle extends StatelessWidget {
@@ -300,15 +331,15 @@ class _DragHandle extends StatelessWidget {
       child: AnimatedContainer(
         duration: kVibeTransitionDuration,
         curve: kVibeTransitionCurve,
-        height: 24,
+        height: VibePickerSheet.kHandleHeight,
         color: backgroundColor,
         alignment: Alignment.center,
         child: Container(
-          width: 36,
-          height: 4,
+          width: _kHandlePillWidth,
+          height: _kHandlePillHeight,
           decoration: BoxDecoration(
             color: Colors.white38,
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(_kHandlePillRadius),
           ),
         ),
       ),

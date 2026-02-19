@@ -4,6 +4,19 @@ import '../models/vibe_data.dart';
 import '../widgets/bird_view_area.dart';
 import '../widgets/vibe_picker_sheet.dart';
 
+// App bar composition: 8px top padding + 48px IconButton + 8px bottom padding.
+const _kAppBarHeight = 64.0;
+
+// Opacity threshold below which the app bar is treated as invisible
+// and pointer events are ignored.
+const _kAppBarMinVisibleOpacity = 0.1;
+
+// Age toggle visual constants.
+const _kAgeToggleBorderRadius = 20.0;
+const _kAgeOptionHorizontalPadding = 12.0;
+const _kAgeOptionVerticalPadding = 8.0;
+const _kAgeToggleFontSize = 12.0;
+
 class VibeSelectionScreen extends StatefulWidget {
   const VibeSelectionScreen({super.key});
 
@@ -18,12 +31,14 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
 
   // Sheet extent driven by a ValueNotifier so only BirdViewArea rebuilds
   // during drag, not the entire screen.
+  // Initial value is a reasonable estimate; overridden in didChangeDependencies().
   final _sheetExtentNotifier = ValueNotifier<double>(0.38);
 
-  // Cached values — recomputed only when screen metrics change.
+  // Cached values — reasonable estimates for a typical phone screen.
+  // All three are recomputed in didChangeDependencies() before the first frame.
   double _computedMinExtent = 0.38;
   double _computedMaxExtent = 0.65;
-  double _computedTargetRows = 1.4;
+  double _computedTargetRows = 1.4; // 1 full row + 40% peek
 
   VibeTheme get _theme {
     if (_selectedVibeIndex == null) return VibeTheme.magic;
@@ -63,8 +78,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
     // Pre-compute values for the proximity-based app bar fade.
     final screenHeight = MediaQuery.sizeOf(context).height;
     final safeAreaTop = MediaQuery.paddingOf(context).top;
-    // App bar: SafeArea(top) + 8px padding + 48px IconButton + 8px padding.
-    final appBarBottom = safeAreaTop + 64;
+    final appBarBottom = safeAreaTop + _kAppBarHeight;
     final restGap = BirdViewArea.computeRestGap(
       availableHeight: screenHeight,
       minExtent: _computedMinExtent,
@@ -88,6 +102,8 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
               maxExtent: _computedMaxExtent,
               topReserved: appBarBottom,
               useNewBubblePositioning: _useNewBubblePositioning,
+              backgroundAssetPath: theme.backgroundAssetPath,
+              skyColor: theme.skyColor,
             ),
           ),
 
@@ -141,7 +157,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
                   1.0,
                 );
                 return IgnorePointer(
-                  ignoring: opacity < 0.1,
+                  ignoring: opacity < _kAppBarMinVisibleOpacity,
                   child: Opacity(opacity: opacity, child: child),
                 );
               },
@@ -178,7 +194,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.black26,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(_kAgeToggleBorderRadius),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -195,16 +211,19 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
     return GestureDetector(
       onTap: () => setState(() => _birdAge = age),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: _kAgeOptionHorizontalPadding,
+          vertical: _kAgeOptionVerticalPadding,
+        ),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(_kAgeToggleBorderRadius),
         ),
         child: Text(
           label,
           style: TextStyle(
             color: isSelected ? Colors.black : Colors.white,
-            fontSize: 12,
+            fontSize: _kAgeToggleFontSize,
           ),
         ),
       ),

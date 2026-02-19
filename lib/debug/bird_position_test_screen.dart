@@ -8,6 +8,14 @@ import '../widgets/speech_bubble.dart';
 /// All available bird asset prefixes.
 const _kBirdPrefixes = ['bird-pose-smart-book', 'bird-pose-celebrate-confetti'];
 
+// _BirdPreview anchor-line constants.
+/// How far the red anchor line extends beyond the bird SVG on each side.
+const _kAnchorLineExtraWidth = 40.0;
+const _kAnchorLineThickness = 2.0;
+
+/// Distance from the bottom of the preview area to the bird center.
+const _kBirdPreviewBottomOffset = 96.0;
+
 /// Isolated test screen for verifying bird SVG positioning and anchor alignment.
 ///
 /// Features:
@@ -59,7 +67,7 @@ class _BirdPositionTestScreenState extends State<BirdPositionTestScreen> {
                   Positioned(
                     left: 0,
                     right: 0,
-                    bottom: 96,
+                    bottom: _kBirdPreviewBottomOffset,
                     child: Center(
                       child: _BirdPreview(
                         assetPath: _assetPath,
@@ -170,7 +178,11 @@ class _BirdPreview extends StatelessWidget {
                 ),
               ),
               // Red anchor line flush with the bottom of the SVG
-              Container(width: birdSize + 40, height: 2, color: Colors.red),
+              Container(
+                width: birdSize + _kAnchorLineExtraWidth,
+                height: _kAnchorLineThickness,
+                color: Colors.red,
+              ),
             ],
           ),
         ),

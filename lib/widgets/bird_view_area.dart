@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../models/bird_anchor_data.dart';
+import '../models/vibe_data.dart';
 import '../theme/animation.dart';
 import 'speech_bubble.dart';
 
@@ -25,16 +26,31 @@ class BirdViewArea extends StatelessWidget {
     required this.maxExtent,
     required this.topReserved,
     this.useNewBubblePositioning = false,
+    required this.backgroundAssetPath,
+    required this.skyColor,
   });
 
   static const double kBirdContainerHeight = 150.0;
 
-  // Approximate height of the bird column (speech bubble + gap + bird container).
-  // Must stay in sync with the Column layout in build().
-  static const double kBirdColumnHeight = 80 + 4 + kBirdContainerHeight; // 234
+  // Background SVG viewBox size (must match the SVG asset's viewBox attribute).
+  static const double _kSvgDesignWidth = 375.0;
+  static const double _kSvgDesignHeight = 812.0;
+
+  // Component heights that compose kBirdColumnHeight.
+  // Must stay in sync with the Column layout in _buildOldLayout().
+  static const double _kSpeechBubbleHeight = 80.0;
+  static const double _kBubbleGap = 4.0;
+
+  /// Approximate height of the bird column (speech bubble + gap + bird container).
+  static const double kBirdColumnHeight =
+      _kSpeechBubbleHeight + _kBubbleGap + kBirdContainerHeight; // 234
+
   static const double kMinRestGap = 12.0;
   static const double kMaxExtentGap = 4.0;
   static const double kFadeRange = 40.0;
+
+  /// Horizontal margin applied to the bird column (left and right).
+  static const double kBirdHorizontalPadding = 16.0;
 
   /// Computes the rest gap (space between app bar and bird column at min extent).
   /// Used by both BirdViewArea and the app bar fade in VibeSelectionScreen.
@@ -65,12 +81,15 @@ class BirdViewArea extends StatelessWidget {
   /// so the tail aligns with the bird's mouth.
   final bool useNewBubblePositioning;
 
+  final String backgroundAssetPath;
+  final Color skyColor;
+
   Widget _buildOldLayout() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         SpeechBubble(text: speechBubbleText),
-        const SizedBox(height: 4),
+        const SizedBox(height: _kBubbleGap),
         SizedBox(
           height: kBirdContainerHeight,
           child: Align(
@@ -108,7 +127,7 @@ class BirdViewArea extends StatelessWidget {
             left: 0,
             right: 0,
             bottom: bubbleBottom,
-            child: SpeechBubble(
+            child: MouthAlignedSpeechBubble(
               text: speechBubbleText,
               mouthX: anchor.mouthX,
               birdWidth: birdSize,
@@ -126,22 +145,49 @@ class BirdViewArea extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableHeight = constraints.maxHeight;
+        final screenWidth = constraints.maxWidth;
         final restGap = computeRestGap(
           availableHeight: availableHeight,
           minExtent: minExtent,
           topReserved: topReserved,
         );
 
+        // SVG scaling: fit width, compute rendered height and ground offset.
+        final scale = screenWidth / _kSvgDesignWidth;
+        final svgRenderedHeight = _kSvgDesignHeight * scale;
+        final groundFromSvgTop = VibeTheme.kGroundLineY * scale;
+
+        // Pre-build SVG widget (doesn't rebuild during drag).
+        final svgWidget = AnimatedSwitcher(
+          duration: kVibeTransitionDuration,
+          child: SvgPicture.asset(
+            backgroundAssetPath,
+            key: ValueKey(backgroundAssetPath),
+            fit: BoxFit.fill,
+            width: screenWidth,
+            height: svgRenderedHeight,
+          ),
+        );
+
+        // Pre-build bird column (doesn't rebuild during drag).
+        final birdWidget = anchor != null
+            ? _buildNewLayout(anchor)
+            : _buildOldLayout();
+
         return Stack(
+          clipBehavior: Clip.hardEdge,
           children: [
+            // Sky color fills gap above SVG.
             AnimatedContainer(
               duration: kVibeTransitionDuration,
               curve: kVibeTransitionCurve,
-              color: backgroundColor,
+              color: skyColor,
             ),
+            // SVG background + bird, both repositioned on each drag frame.
             ValueListenableBuilder<double>(
               valueListenable: sheetExtentNotifier,
-              builder: (context, sheetExtent, child) {
+              builder: (context, sheetExtent, _) {
+                // Bird positioning math (UNCHANGED).
                 final range = maxExtent - minExtent;
                 final t = range > 0
                     ? ((sheetExtent - minExtent) / range).clamp(0.0, 1.0)
@@ -149,16 +195,29 @@ class BirdViewArea extends StatelessWidget {
                 final gap = restGap + (kMaxExtentGap - restGap) * t;
                 final bottomOffset = availableHeight * sheetExtent + gap;
 
-                return Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: bottomOffset,
-                  child: child!,
+                // SVG ground anchored to bird feet.
+                final birdFeetFromTop = availableHeight - bottomOffset;
+                final svgTop = birdFeetFromTop - groundFromSvgTop;
+
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned(
+                      top: svgTop,
+                      left: 0,
+                      right: 0,
+                      height: svgRenderedHeight,
+                      child: svgWidget,
+                    ),
+                    Positioned(
+                      left: kBirdHorizontalPadding,
+                      right: kBirdHorizontalPadding,
+                      bottom: bottomOffset,
+                      child: birdWidget,
+                    ),
+                  ],
                 );
               },
-              child: anchor != null
-                  ? _buildNewLayout(anchor)
-                  : _buildOldLayout(),
             ),
           ],
         );

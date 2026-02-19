@@ -16,14 +16,9 @@ enum BirdAge {
 
 /// A single selectable vibe option shown in the drawer grid.
 class VibeOption {
-  const VibeOption({
-    required this.label,
-    required this.icon,
-    required this.type,
-  });
+  const VibeOption({required this.label, required this.type});
 
   final String label;
-  final IconData icon;
   final VibeType type;
 }
 
@@ -35,13 +30,22 @@ class VibeTheme {
     required this.birdAreaBackground,
     required this.speechBubbleText,
     required this.birdAssetPrefix,
+    required this.backgroundAssetPath,
+    required this.skyColor,
+    required this.iconAssetPath,
   });
+
+  /// Y coordinate of the ground line in the background SVG (viewBox 0 0 375 812).
+  static const double kGroundLineY = 428.0;
 
   final Color drawerBackground;
   final Color footerBackground;
   final Color birdAreaBackground;
   final String speechBubbleText;
   final String birdAssetPrefix;
+  final String backgroundAssetPath;
+  final Color skyColor;
+  final String iconAssetPath;
 
   /// Returns the bird SVG asset path for the given [age].
   String birdAssetPath(BirdAge age) {
@@ -55,6 +59,9 @@ class VibeTheme {
     birdAreaBackground: VibeColors.magicBirdAreaBackground,
     speechBubbleText: 'Your heart holds so many bright pages,\ncheep!',
     birdAssetPrefix: 'bird-pose-smart-book',
+    backgroundAssetPath: 'assets/books.svg',
+    skyColor: VibeColors.magicSkyColor,
+    iconAssetPath: 'assets/open_book.svg',
   );
 
   static const newYears = VibeTheme._(
@@ -63,6 +70,9 @@ class VibeTheme {
     birdAreaBackground: VibeColors.newYearsBirdAreaBackground,
     speechBubbleText: "Let's end the year with kindness!",
     birdAssetPrefix: 'bird-pose-celebrate-confetti',
+    backgroundAssetPath: 'assets/balloon.svg',
+    skyColor: VibeColors.newYearsSkyColor,
+    iconAssetPath: 'assets/party_popper.svg',
   );
 
   /// Resolves the theme for a given [vibeType].
@@ -77,61 +87,23 @@ class VibeTheme {
 }
 
 /// The default list of vibe options shown in the drawer.
-// TODO: Replace placeholder labels/icons with actual vibe data and integrate
-// the unused SVG assets (balloon.svg, books.svg, open_book.svg, party_popper.svg).
 const List<VibeOption> kDefaultVibes = [
-  VibeOption(label: 'Magic', icon: Icons.auto_stories, type: VibeType.magic),
-  VibeOption(
-    label: 'New Years',
-    icon: Icons.celebration,
-    type: VibeType.newYears,
-  ),
-  VibeOption(label: 'Magic', icon: Icons.auto_stories, type: VibeType.magic),
-  VibeOption(
-    label: 'New Years',
-    icon: Icons.celebration,
-    type: VibeType.newYears,
-  ),
-  VibeOption(label: 'Magic', icon: Icons.auto_stories, type: VibeType.magic),
-  VibeOption(
-    label: 'New Years',
-    icon: Icons.celebration,
-    type: VibeType.newYears,
-  ),
-  VibeOption(label: 'Magic', icon: Icons.auto_stories, type: VibeType.magic),
-  VibeOption(
-    label: 'New Years',
-    icon: Icons.celebration,
-    type: VibeType.newYears,
-  ),
-  VibeOption(label: 'Magic', icon: Icons.auto_stories, type: VibeType.magic),
-  VibeOption(
-    label: 'New Years',
-    icon: Icons.celebration,
-    type: VibeType.newYears,
-  ),
-  VibeOption(label: 'Magic', icon: Icons.auto_stories, type: VibeType.magic),
-  VibeOption(
-    label: 'New Years',
-    icon: Icons.celebration,
-    type: VibeType.newYears,
-  ),
-  VibeOption(label: 'Magic', icon: Icons.auto_stories, type: VibeType.magic),
-  VibeOption(
-    label: 'New Years',
-    icon: Icons.celebration,
-    type: VibeType.newYears,
-  ),
-  VibeOption(label: 'Magic', icon: Icons.auto_stories, type: VibeType.magic),
-  VibeOption(
-    label: 'New Years',
-    icon: Icons.celebration,
-    type: VibeType.newYears,
-  ),
-  VibeOption(label: 'Magic', icon: Icons.auto_stories, type: VibeType.magic),
-  VibeOption(
-    label: 'New Years',
-    icon: Icons.celebration,
-    type: VibeType.newYears,
-  ),
+  VibeOption(label: 'Magic', type: VibeType.magic),
+  VibeOption(label: 'New Years', type: VibeType.newYears),
+  VibeOption(label: 'Magic', type: VibeType.magic),
+  VibeOption(label: 'New Years', type: VibeType.newYears),
+  VibeOption(label: 'Magic', type: VibeType.magic),
+  VibeOption(label: 'New Years', type: VibeType.newYears),
+  VibeOption(label: 'Magic', type: VibeType.magic),
+  VibeOption(label: 'New Years', type: VibeType.newYears),
+  VibeOption(label: 'Magic', type: VibeType.magic),
+  VibeOption(label: 'New Years', type: VibeType.newYears),
+  VibeOption(label: 'Magic', type: VibeType.magic),
+  VibeOption(label: 'New Years', type: VibeType.newYears),
+  VibeOption(label: 'Magic', type: VibeType.magic),
+  VibeOption(label: 'New Years', type: VibeType.newYears),
+  VibeOption(label: 'Magic', type: VibeType.magic),
+  VibeOption(label: 'New Years', type: VibeType.newYears),
+  VibeOption(label: 'Magic', type: VibeType.magic),
+  VibeOption(label: 'New Years', type: VibeType.newYears),
 ];

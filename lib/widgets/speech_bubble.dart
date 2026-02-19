@@ -4,27 +4,57 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../theme/animation.dart';
 import 'animated_typed_text.dart';
 
-/// A speech bubble with a tail, displaying [text].
+const _kTailWidth = 16.0;
+const _kTailHeight = 10.0;
+const _kTailOverlap = 1.0;
+const _kBubblePadding = 16.0;
+const _kBubbleMargin = 16.0;
+const _kBubbleRadius = 16.0;
+
+/// Delay before the typewriter animation starts — gives the theme transition
+/// time to settle before text begins revealing.
+const _kBubbleTextStartDelay = Duration(milliseconds: 100);
+
+/// A speech bubble with a left-aligned tail (aligned to the text start).
 ///
-/// [mouthX] is a normalized 0–1 fraction where 0.5 = center of the bird.
-/// When provided with [birdWidth], the tail is offset from center by
-/// `(mouthX - 0.5) * birdWidth` pixels, and flipped when the mouth is
-/// on the right half (mouthX > 0.5).
+/// Uses a [Stack] so the tail positions relative to the bubble body, not
+/// the parent width. The tail sits at the left text edge (margin + padding).
 class SpeechBubble extends StatelessWidget {
-  const SpeechBubble({
-    super.key,
-    required this.text,
-    this.mouthX = 0.33,
-    this.birdWidth = 0,
-  });
+  const SpeechBubble({super.key, required this.text});
 
   final String text;
 
-  /// Normalized 0–1 horizontal mouth position (0.5 = center).
-  final double mouthX;
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        _BubbleBody(text: text),
+        Positioned(
+          bottom: -(_kTailHeight - _kTailOverlap),
+          left: _kBubbleMargin + _kBubblePadding,
+          child: _SpeechBubbleTail(),
+        ),
+      ],
+    );
+  }
+}
 
-  /// Width of the bird SVG, used to compute the pixel offset for the tail.
-  /// When 0, the tail sits at center with no offset.
+/// A speech bubble whose tail aligns with the bird's mouth.
+///
+/// [mouthX] is a normalized 0–1 fraction where 0.5 = center of the bird.
+/// The tail is offset from center by `(mouthX - 0.5) * birdWidth` pixels,
+/// and flipped when the mouth is on the right half (mouthX > 0.5).
+class MouthAlignedSpeechBubble extends StatelessWidget {
+  const MouthAlignedSpeechBubble({
+    super.key,
+    required this.text,
+    required this.mouthX,
+    required this.birdWidth,
+  });
+
+  final String text;
+  final double mouthX;
   final double birdWidth;
 
   @override
@@ -34,38 +64,57 @@ class SpeechBubble extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: AnimatedSize(
-            duration: kVibeTransitionDuration,
-            curve: kVibeTransitionCurve,
-            alignment: Alignment.topCenter,
-            clipBehavior: Clip.none,
-            child: AnimatedTypedText(
-              text: text,
-              startDelay: const Duration(milliseconds: 100),
-            ),
-          ),
-        ),
-        // Tail pointing down toward the bird.
-        // -1px closes the subpixel gap between bubble and tail.
+        _BubbleBody(text: text),
         Transform.translate(
-          offset: Offset(tailPixelOffset, -1),
+          offset: Offset(tailPixelOffset, -_kTailOverlap),
           child: Transform.flip(
             flipX: mouthX > 0.5,
-            child: SvgPicture.asset(
-              'assets/speech-bubble-tail.svg',
-              width: 16,
-              height: 10,
-            ),
+            child: _SpeechBubbleTail(),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Shared bubble container: white rounded box with animated text.
+class _BubbleBody extends StatelessWidget {
+  const _BubbleBody({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(_kBubblePadding),
+      margin: const EdgeInsets.symmetric(horizontal: _kBubbleMargin),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(_kBubbleRadius),
+      ),
+      child: AnimatedSize(
+        duration: kVibeTransitionDuration,
+        curve: kVibeTransitionCurve,
+        alignment: Alignment.topCenter,
+        clipBehavior: Clip.none,
+        child: AnimatedTypedText(
+          text: text,
+          startDelay: _kBubbleTextStartDelay,
+        ),
+      ),
+    );
+  }
+}
+
+class _SpeechBubbleTail extends StatelessWidget {
+  const _SpeechBubbleTail();
+
+  @override
+  Widget build(BuildContext context) {
+    return SvgPicture.asset(
+      'assets/speech-bubble-tail.svg',
+      width: _kTailWidth,
+      height: _kTailHeight,
     );
   }
 }

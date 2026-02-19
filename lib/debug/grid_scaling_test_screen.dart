@@ -6,23 +6,6 @@ import '../widgets/adaptive_grid_delegate.dart';
 import '../widgets/vibe_option_tile.dart';
 import '../widgets/vibe_picker_sheet.dart';
 
-/// Device presets for quick testing.
-class _DevicePreset {
-  const _DevicePreset(this.label, this.height);
-  final String label;
-  final double height;
-}
-
-const _kPresets = [
-  _DevicePreset('iPhone SE', 667),
-  _DevicePreset('iPhone 14', 844),
-  _DevicePreset('iPhone 14 Pro Max', 932),
-  _DevicePreset('Pixel 5', 851),
-  _DevicePreset('iPad Mini', 1024),
-  _DevicePreset('iPad Mini (1133)', 1133),
-  _DevicePreset('iPad Pro 12.9"', 1366),
-];
-
 /// Debug screen for testing adaptive grid scaling at various simulated heights.
 ///
 /// Renders a simulated drawer (handle + grid + footer) clipped to the exact
@@ -206,3 +189,22 @@ class _GridScalingTestScreenState extends State<GridScalingTestScreen> {
     );
   }
 }
+
+// ── Private helpers ────────────────────────────────────────────────────────────
+
+/// Device presets for quick testing.
+class _DevicePreset {
+  const _DevicePreset(this.label, this.height);
+  final String label;
+  final double height;
+}
+
+const _kPresets = [
+  _DevicePreset('iPhone SE', 667),
+  _DevicePreset('iPhone 14', 844),
+  _DevicePreset('iPhone 14 Pro Max', 932),
+  _DevicePreset('Pixel 5', 851),
+  _DevicePreset('iPad Mini', 1024),
+  _DevicePreset('iPad Mini (1133)', 1133),
+  _DevicePreset('iPad Pro 12.9"', 1366),
+];

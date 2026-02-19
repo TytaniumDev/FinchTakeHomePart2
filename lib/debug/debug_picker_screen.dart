@@ -1,5 +1,27 @@
 import 'package:flutter/material.dart';
 
+/// Picker screen that lists all available debug test widgets.
+class DebugPickerScreen extends StatelessWidget {
+  const DebugPickerScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Debug Testing')),
+      body: ListView.separated(
+        itemCount: _kDebugEntries.length,
+        separatorBuilder: (_, _) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final entry = _kDebugEntries[index];
+          return _DebugListTile(entry: entry);
+        },
+      ),
+    );
+  }
+}
+
+// ── Private helpers ────────────────────────────────────────────────────────────
+
 /// A list item representing a single debug test screen.
 class _DebugEntry {
   const _DebugEntry({
@@ -39,26 +61,6 @@ const _kDebugEntries = [
     route: '/debug/anchor',
   ),
 ];
-
-/// Picker screen that lists all available debug test widgets.
-class DebugPickerScreen extends StatelessWidget {
-  const DebugPickerScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Debug Testing')),
-      body: ListView.separated(
-        itemCount: _kDebugEntries.length,
-        separatorBuilder: (_, _) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final entry = _kDebugEntries[index];
-          return _DebugListTile(entry: entry);
-        },
-      ),
-    );
-  }
-}
 
 class _DebugListTile extends StatelessWidget {
   const _DebugListTile({required this.entry});
