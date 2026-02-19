@@ -4,7 +4,7 @@ import '../theme/animation.dart';
 
 const _kFooterHorizontalPadding = 24.0;
 const _kFooterVerticalPadding = 16.0;
-const _kDoneButtonBorderRadius = 24.0;
+const _kDoneButtonBorderRadius = 14.0;
 
 /// Footer bar with the "Done" / "Upgrade to send" button.
 class Footer extends StatelessWidget {
@@ -38,7 +38,14 @@ class Footer extends StatelessWidget {
             borderRadius: BorderRadius.circular(_kDoneButtonBorderRadius),
           ),
           child: const Center(
-            child: Text('Done', style: TextStyle(color: Colors.black)),
+            child: Text(
+              'Done',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+            ),
           ),
         ),
       ),
