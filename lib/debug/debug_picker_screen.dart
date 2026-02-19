@@ -16,7 +16,7 @@ class _DebugEntry {
 /// All available debug test screens.
 ///
 /// To add a new test, just append a [_DebugEntry] here and register
-/// the route in [main.dart].
+/// the route in [vibes_screen.dart].
 const _kDebugEntries = [
   _DebugEntry(
     title: 'Bird Positioning',

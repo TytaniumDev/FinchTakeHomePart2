@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../models/vibe_data.dart';
+import '../widgets/bird_view_area.dart';
 import '../widgets/speech_bubble.dart';
 
 /// All available bird asset prefixes.
@@ -30,7 +31,7 @@ class _BirdPositionTestScreenState extends State<BirdPositionTestScreen> {
     return 'assets/${_selectedPrefix}_$ageSuffix.svg';
   }
 
-  double get _birdSize => _birdAge == BirdAge.adult ? 150.0 : 112.5;
+  double get _birdSize => _birdAge.size;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +61,10 @@ class _BirdPositionTestScreenState extends State<BirdPositionTestScreen> {
                     right: 0,
                     bottom: 96,
                     child: Center(
-                      child: _BirdPreview(assetPath: _assetPath, birdSize: _birdSize),
+                      child: _BirdPreview(
+                        assetPath: _assetPath,
+                        birdSize: _birdSize,
+                      ),
                     ),
                   ),
                 ],
@@ -155,10 +159,14 @@ class _BirdPreview extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                height: 150,
+                height: BirdViewArea.kBirdContainerHeight,
                 child: Align(
                   alignment: Alignment.bottomCenter,
-                  child: SvgPicture.asset(assetPath, width: birdSize, height: birdSize),
+                  child: SvgPicture.asset(
+                    assetPath,
+                    width: birdSize,
+                    height: birdSize,
+                  ),
                 ),
               ),
               // Red anchor line flush with the bottom of the SVG

@@ -56,7 +56,8 @@ class _GridScalingTestScreenState extends State<GridScalingTestScreen> {
     final targetRows = result.targetRows;
 
     final minSheetHeight = _viewHeight * minExtent;
-    final availableGridHeight = minSheetHeight -
+    final availableGridHeight =
+        minSheetHeight -
         VibePickerSheet.kHandleHeight -
         VibePickerSheet.kFooterBaseHeight;
 

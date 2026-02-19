@@ -58,21 +58,18 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = _theme;
-    final birdSize = _birdAge == BirdAge.adult ? 150.0 : 112.5;
+    final birdSize = _birdAge.size;
 
     // Pre-compute values for the proximity-based app bar fade.
     final screenHeight = MediaQuery.sizeOf(context).height;
     final safeAreaTop = MediaQuery.paddingOf(context).top;
     // App bar: SafeArea(top) + 8px padding + 48px IconButton + 8px padding.
     final appBarBottom = safeAreaTop + 64;
-    // Mirror BirdViewArea's restGap: center, but cap for app bar visibility.
-    final leftover = screenHeight * (1 - _computedMinExtent) -
-        appBarBottom -
-        BirdViewArea.kBirdColumnHeight;
-    final maxGap = (leftover - BirdViewArea.kFadeRange)
-        .clamp(BirdViewArea.kMinRestGap, double.infinity);
-    final restGap =
-        (leftover / 2).clamp(BirdViewArea.kMinRestGap, maxGap);
+    final restGap = BirdViewArea.computeRestGap(
+      availableHeight: screenHeight,
+      minExtent: _computedMinExtent,
+      topReserved: appBarBottom,
+    );
 
     return Scaffold(
       body: Stack(
@@ -111,8 +108,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
             },
             onDone: () {
               setState(
-                () =>
-                    _useNewBubblePositioning = !_useNewBubblePositioning,
+                () => _useNewBubblePositioning = !_useNewBubblePositioning,
               );
             },
           ),
@@ -128,17 +124,22 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
                 // Replicate BirdViewArea gap logic to find column top.
                 final range = _computedMaxExtent - _computedMinExtent;
                 final t = range > 0
-                    ? ((sheetExtent - _computedMinExtent) / range)
-                        .clamp(0.0, 1.0)
+                    ? ((sheetExtent - _computedMinExtent) / range).clamp(
+                        0.0,
+                        1.0,
+                      )
                     : 0.0;
                 final gap =
                     restGap + (BirdViewArea.kMaxExtentGap - restGap) * t;
-                final birdColumnTop = screenHeight * (1 - sheetExtent) -
+                final birdColumnTop =
+                    screenHeight * (1 - sheetExtent) -
                     gap -
                     BirdViewArea.kBirdColumnHeight;
                 final distance = birdColumnTop - appBarBottom;
-                final opacity =
-                    (distance / BirdViewArea.kFadeRange).clamp(0.0, 1.0);
+                final opacity = (distance / BirdViewArea.kFadeRange).clamp(
+                  0.0,
+                  1.0,
+                );
                 return IgnorePointer(
                   ignoring: opacity < 0.1,
                   child: Opacity(opacity: opacity, child: child),
@@ -147,14 +148,15 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen> {
               child: SafeArea(
                 bottom: false,
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                        onPressed: () =>
-                            Navigator.pushNamed(context, '/debug'),
+                        onPressed: () => Navigator.pushNamed(context, '/debug'),
                         icon: const Icon(Icons.close, color: Colors.white),
                         style: IconButton.styleFrom(
                           backgroundColor: Colors.black26,

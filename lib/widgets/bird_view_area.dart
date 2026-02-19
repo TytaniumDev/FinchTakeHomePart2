@@ -27,12 +27,27 @@ class BirdViewArea extends StatelessWidget {
     this.useNewBubblePositioning = false,
   });
 
+  static const double kBirdContainerHeight = 150.0;
+
   // Approximate height of the bird column (speech bubble + gap + bird container).
   // Must stay in sync with the Column layout in build().
-  static const double kBirdColumnHeight = 80 + 4 + 150; // 234
+  static const double kBirdColumnHeight = 80 + 4 + kBirdContainerHeight; // 234
   static const double kMinRestGap = 12.0;
   static const double kMaxExtentGap = 4.0;
   static const double kFadeRange = 40.0;
+
+  /// Computes the rest gap (space between app bar and bird column at min extent).
+  /// Used by both BirdViewArea and the app bar fade in VibeSelectionScreen.
+  static double computeRestGap({
+    required double availableHeight,
+    required double minExtent,
+    required double topReserved,
+  }) {
+    final leftover =
+        availableHeight * (1 - minExtent) - topReserved - kBirdColumnHeight;
+    final maxGap = (leftover - kFadeRange).clamp(kMinRestGap, double.infinity);
+    return (leftover / 2).clamp(kMinRestGap, maxGap);
+  }
 
   final Color backgroundColor;
   final String speechBubbleText;
@@ -57,7 +72,7 @@ class BirdViewArea extends StatelessWidget {
         SpeechBubble(text: speechBubbleText),
         const SizedBox(height: 4),
         SizedBox(
-          height: 150,
+          height: kBirdContainerHeight,
           child: Align(
             alignment: Alignment.bottomCenter,
             child: SvgPicture.asset(
@@ -72,11 +87,10 @@ class BirdViewArea extends StatelessWidget {
   }
 
   Widget _buildNewLayout(BirdAnchor anchor) {
-    final tailXOffset = (anchor.mouthX - 0.5) * birdSize;
     final bubbleBottom = birdSize * (1 - anchor.safeAreaTopY);
 
     return SizedBox(
-      height: 150,
+      height: kBirdContainerHeight,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -89,16 +103,17 @@ class BirdViewArea extends StatelessWidget {
               height: birdSize,
             ),
           ),
+          // Speech bubble positioned so tail tip sits at safeAreaTopY
           Positioned(
             left: 0,
             right: 0,
             bottom: bubbleBottom,
             child: SpeechBubble(
               text: speechBubbleText,
-              tailXOffset: tailXOffset,
+              mouthX: anchor.mouthX,
+              birdWidth: birdSize,
             ),
           ),
-          // Speech bubble positioned so tail tip sits at safeAreaTopY
         ],
       ),
     );
@@ -111,14 +126,11 @@ class BirdViewArea extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableHeight = constraints.maxHeight;
-
-        // Center the bird between app bar and sheet, but cap so the bird
-        // top stays at least kFadeRange below topReserved (app bar visible).
-        final leftover =
-            availableHeight * (1 - minExtent) - topReserved - kBirdColumnHeight;
-        final maxGap =
-            (leftover - kFadeRange).clamp(kMinRestGap, double.infinity);
-        final restGap = (leftover / 2).clamp(kMinRestGap, maxGap);
+        final restGap = computeRestGap(
+          availableHeight: availableHeight,
+          minExtent: minExtent,
+          topReserved: topReserved,
+        );
 
         return Stack(
           children: [

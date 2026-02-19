@@ -120,94 +120,93 @@ class _BirdAnchorCalibrationScreenState
             child: Center(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final birdSize =
-                      constraints.biggest.shortestSide.clamp(250.0, 400.0);
+                  final birdSize = constraints.biggest.shortestSide.clamp(
+                    250.0,
+                    400.0,
+                  );
 
                   return SizedBox(
                     width: birdSize,
                     height: birdSize,
                     child: GestureDetector(
-                      onTapDown: (d) =>
-                          _onTapDown(d, Size(birdSize, birdSize)),
+                      onTapDown: (d) => _onTapDown(d, Size(birdSize, birdSize)),
                       child: Stack(
-                      children: [
-                        // Bird SVG — same as BirdViewArea: explicit
-                        // width/height, default BoxFit.contain.
-                        SvgPicture.asset(
-                          _currentAsset,
-                          width: birdSize,
-                          height: birdSize,
-                        ),
-
-                        // Compiled safe area line (blue)
-                        if (anchor != null)
-                          Positioned(
-                            top: anchor.safeAreaTopY * birdSize,
-                            left: 0,
-                            right: 0,
-                            child: Container(
-                              height: 2,
-                              color: Colors.blue.withValues(alpha: 0.7),
-                            ),
+                        children: [
+                          // Bird SVG — same as BirdViewArea: explicit
+                          // width/height, default BoxFit.contain.
+                          SvgPicture.asset(
+                            _currentAsset,
+                            width: birdSize,
+                            height: birdSize,
                           ),
 
-                        // Compiled mouth dot (red)
-                        if (anchor != null)
-                          Positioned(
-                            left: anchor.mouthX * birdSize - 6,
-                            top: anchor.mouthY * birdSize - 6,
-                            child: Container(
-                              width: 12,
-                              height: 12,
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
+                          // Compiled safe area line (blue)
+                          if (anchor != null)
+                            Positioned(
+                              top: anchor.safeAreaTopY * birdSize,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                height: 2,
+                                color: Colors.blue.withValues(alpha: 0.7),
                               ),
                             ),
-                          ),
 
-                        // Tapped position (green crosshair)
-                        if (_lastTapNormalized != null) ...[
-                          Positioned(
-                            left: _lastTapNormalized!.dx * birdSize,
-                            top: 0,
-                            bottom: 0,
-                            child: Container(
-                              width: 1,
-                              color: Colors.green.withValues(alpha: 0.5),
-                            ),
-                          ),
-                          Positioned(
-                            top: _lastTapNormalized!.dy * birdSize,
-                            left: 0,
-                            right: 0,
-                            child: Container(
-                              height: 1,
-                              color: Colors.green.withValues(alpha: 0.5),
-                            ),
-                          ),
-                          Positioned(
-                            left:
-                                _lastTapNormalized!.dx * birdSize - 5,
-                            top:
-                                _lastTapNormalized!.dy * birdSize - 5,
-                            child: Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 1.5,
+                          // Compiled mouth dot (red)
+                          if (anchor != null)
+                            Positioned(
+                              left: anchor.mouthX * birdSize - 6,
+                              top: anchor.mouthY * birdSize - 6,
+                              child: Container(
+                                width: 12,
+                                height: 12,
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
                                 ),
                               ),
                             ),
-                          ),
+
+                          // Tapped position (green crosshair)
+                          if (_lastTapNormalized != null) ...[
+                            Positioned(
+                              left: _lastTapNormalized!.dx * birdSize,
+                              top: 0,
+                              bottom: 0,
+                              child: Container(
+                                width: 1,
+                                color: Colors.green.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            Positioned(
+                              top: _lastTapNormalized!.dy * birdSize,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                height: 1,
+                                color: Colors.green.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            Positioned(
+                              left: _lastTapNormalized!.dx * birdSize - 5,
+                              top: _lastTapNormalized!.dy * birdSize - 5,
+                              child: Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
                   );
                 },
               ),
@@ -234,7 +233,10 @@ class _BirdAnchorCalibrationScreenState
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Text('Compiled mouth', style: TextStyle(fontSize: 11)),
+                    const Text(
+                      'Compiled mouth',
+                      style: TextStyle(fontSize: 11),
+                    ),
                     const SizedBox(width: 12),
                     Container(width: 10, height: 2, color: Colors.blue),
                     const SizedBox(width: 4),
@@ -268,16 +270,14 @@ class _BirdAnchorCalibrationScreenState
                   _anchorLiteral.isNotEmpty
                       ? _anchorLiteral
                       : 'BirdAnchor(\n'
-                          '  mouthX: —,\n'
-                          '  mouthY: —,\n'
-                          '  safeAreaTopY: —,\n'
-                          ')',
+                            '  mouthX: —,\n'
+                            '  mouthY: —,\n'
+                            '  safeAreaTopY: —,\n'
+                            ')',
                   style: TextStyle(
                     fontSize: 12,
                     fontFamily: 'monospace',
-                    color: _anchorLiteral.isNotEmpty
-                        ? null
-                        : Colors.grey,
+                    color: _anchorLiteral.isNotEmpty ? null : Colors.grey,
                   ),
                 ),
               ],

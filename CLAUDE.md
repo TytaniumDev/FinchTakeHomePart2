@@ -41,12 +41,12 @@ dart format lib/
 2. `VibePickerSheet` — draggable bottom sheet containing the vibe grid + footer
 3. Transparent app bar — close button (opens debug menu) + baby/adult toggle
 
-**Bird anchoring:** `BirdViewArea` uses `LayoutBuilder` + `Positioned` to pin the bird's feet at the top edge of the sheet (`bottom: availableHeight * sheetExtent + parallaxOffset + 8`). The speech bubble sits in a `Column` above the bird so text reflow doesn't shift the feet.
+**Bird anchoring:** `BirdViewArea` uses `LayoutBuilder` + `Positioned` to pin the bird's feet above the sheet (`bottom: availableHeight * sheetExtent + gap`). A parallax gap compresses from `restGap` (centered) to 4px as the sheet drags to max extent. The speech bubble sits in a `Column` above the bird so text reflow doesn't shift the feet.
 
-**Draggable sheet:** `VibePickerSheet` uses `DraggableScrollableSheet` but the drag handle is driven by a manual `GestureDetector`, not the sheet's built-in scroll controller. Snap-to-extent logic in `_onHandleDragEnd` snaps to `kMinExtent=0.38` or `kMaxExtent=0.65`. The vibe grid has its own separate `ScrollController`.
+**Draggable sheet:** `VibePickerSheet` uses `DraggableScrollableSheet` but the drag handle is driven by a manual `GestureDetector`, not the sheet's built-in scroll controller. Min/max extents are computed dynamically based on screen size (no snapping — the sheet stays wherever the user releases it). The vibe grid scrolls via the sheet's built-in scroll controller.
 
 **Data model (`lib/models/vibe_data.dart`):**
-- `VibeOption` — single selectable vibe (label, icon SVG path, `VibeType`)
+- `VibeOption` — single selectable vibe (label, Material `IconData`, `VibeType`)
 - `VibeType` enum — `magic` or `newYears`
 - `BirdAge` enum — `baby` or `adult`
 - `VibeTheme` — maps a `VibeType` to colors, speech text, and bird asset path
@@ -67,6 +67,8 @@ dart format lib/
 The close button navigates to `/debug` which shows `DebugPickerScreen` — a menu of isolated test screens:
 - `/debug/bird` — bird SVG positioning tester
 - `/debug/sheet` — draggable sheet behavior tester
+- `/debug/grid` — adaptive grid sizing tester
+- `/debug/anchor` — bird anchor calibration tool
 
 New debug screens: add to `_kDebugEntries` in `debug_picker_screen.dart` and register the route in `lib/screens/vibes_screen.dart`.
 

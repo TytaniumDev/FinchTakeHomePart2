@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../models/vibe_data.dart';
 import '../theme/animation.dart';
 import 'adaptive_grid_delegate.dart';
+import 'bird_view_area.dart';
 import 'footer.dart';
 import 'vibe_option_tile.dart';
 
@@ -39,7 +40,7 @@ class VibePickerSheet extends StatefulWidget {
   static const double _kTopMargin = 12;
   static const double _kSpeechBubbleHeight = 80;
   static const double _kBubbleToBirdGap = 4;
-  static const double _kBirdContainerHeight = 150;
+  static const double _kBirdContainerHeight = BirdViewArea.kBirdContainerHeight;
   static const double _kMinGapToSheet = 4;
 
   /// Computes the dynamic max extent so the bird column always fits above
@@ -49,7 +50,8 @@ class VibePickerSheet extends StatefulWidget {
     required double safeAreaTop,
     required double minExtent,
   }) {
-    const reservedAbove = _kTopMargin +
+    const reservedAbove =
+        _kTopMargin +
         _kSpeechBubbleHeight +
         _kBubbleToBirdGap +
         _kBirdContainerHeight +
@@ -188,16 +190,9 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
 
   void _onHandleDrag(DragUpdateDetails details) {
     _sheetPosition -= details.delta.dy / _cachedViewHeight;
-    _sheetPosition = _sheetPosition.clamp(
-      widget.minExtent,
-      widget.maxExtent,
-    );
+    _sheetPosition = _sheetPosition.clamp(widget.minExtent, widget.maxExtent);
     _sheetController.jumpTo(_sheetPosition);
     widget.onExtentChanged?.call(_sheetPosition);
-  }
-
-  void _onHandleDragEnd(DragEndDetails details) {
-    // No-op — sheet stays at current position, no snapping.
   }
 
   @override
@@ -225,16 +220,15 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
           curve: kVibeTransitionCurve,
           decoration: BoxDecoration(
             color: widget.drawerBackground,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(24),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             children: [
               _DragHandle(
-                color: widget.drawerBackground,
+                backgroundColor: widget.drawerBackground,
                 onVerticalDragUpdate: _onHandleDrag,
-                onVerticalDragEnd: _onHandleDragEnd,
+                // No snap on drag end — sheet stays at current position.
+                onVerticalDragEnd: (_) {},
               ),
               Expanded(
                 child: ScrollConfiguration(
@@ -251,9 +245,7 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
                       controller: scrollController,
                       slivers: [
                         SliverPadding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           sliver: SliverGrid(
                             gridDelegate: gridDelegate,
                             delegate: SliverChildBuilderDelegate((
@@ -291,12 +283,12 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
 /// Accepts vertical drag gestures to drive the sheet position.
 class _DragHandle extends StatelessWidget {
   const _DragHandle({
-    required this.color,
+    required this.backgroundColor,
     required this.onVerticalDragUpdate,
     required this.onVerticalDragEnd,
   });
 
-  final Color color;
+  final Color backgroundColor;
   final GestureDragUpdateCallback onVerticalDragUpdate;
   final GestureDragEndCallback onVerticalDragEnd;
 
@@ -309,7 +301,7 @@ class _DragHandle extends StatelessWidget {
         duration: kVibeTransitionDuration,
         curve: kVibeTransitionCurve,
         height: 24,
-        color: color,
+        color: backgroundColor,
         alignment: Alignment.center,
         child: Container(
           width: 36,

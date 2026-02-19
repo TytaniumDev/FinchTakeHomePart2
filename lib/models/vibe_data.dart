@@ -4,7 +4,15 @@ import '../theme/colors.dart';
 
 enum VibeType { magic, newYears }
 
-enum BirdAge { baby, adult }
+enum BirdAge {
+  baby,
+  adult;
+
+  static const double kAdultSize = 150.0;
+  static const double kBabySize = 112.5;
+
+  double get size => this == BirdAge.adult ? kAdultSize : kBabySize;
+}
 
 /// A single selectable vibe option shown in the drawer grid.
 class VibeOption {
@@ -69,6 +77,8 @@ class VibeTheme {
 }
 
 /// The default list of vibe options shown in the drawer.
+// TODO: Replace placeholder labels/icons with actual vibe data and integrate
+// the unused SVG assets (balloon.svg, books.svg, open_book.svg, party_popper.svg).
 const List<VibeOption> kDefaultVibes = [
   VibeOption(label: 'Magic', icon: Icons.auto_stories, type: VibeType.magic),
   VibeOption(
@@ -113,11 +123,15 @@ const List<VibeOption> kDefaultVibes = [
     type: VibeType.newYears,
   ),
   VibeOption(label: 'Magic', icon: Icons.auto_stories, type: VibeType.magic),
-  VibeOption(label: 'Magic', icon: Icons.auto_stories, type: VibeType.magic),
   VibeOption(
     label: 'New Years',
     icon: Icons.celebration,
     type: VibeType.newYears,
   ),
   VibeOption(label: 'Magic', icon: Icons.auto_stories, type: VibeType.magic),
+  VibeOption(
+    label: 'New Years',
+    icon: Icons.celebration,
+    type: VibeType.newYears,
+  ),
 ];

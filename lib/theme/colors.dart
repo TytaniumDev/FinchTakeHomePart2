@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 class VibeColors {
   // Magic vibe colors
   static const Color magicDrawerBackground = Color.fromRGBO(27, 73, 52, 1);
+  // Footer and bird area share the same background color by design,
+  // creating a seamless visual connection between the two regions.
   static const Color magicFooterBackground = Color.fromRGBO(40, 86, 65, 1);
   static const Color magicBirdAreaBackground = Color.fromRGBO(40, 86, 65, 1);
 

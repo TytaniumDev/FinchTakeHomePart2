@@ -43,22 +43,22 @@ flowchart LR
 In `bird_view_area.dart`, the bird and speech bubble form a single `Column(mainAxisSize: MainAxisSize.min)` with a **constant total height of 234px** (`kBirdColumnHeight`):
 
 ```mermaid
-block-beta
-    columns 1
-    block:col["Column (mainAxisSize: min)"]
-        A["SpeechBubble<br/>~80px"]
-        B["SizedBox(height: 4)"]
-        block:container["SizedBox(height: 150) — FIXED container"]
-            columns 1
-            C["Align(bottomCenter)"]
-            D["Bird SVG"]
+flowchart TB
+    subgraph Column["Column (mainAxisSize: min)"]
+        direction TB
+        A["SpeechBubble ~80px"]
+        B["SizedBox height: 4"]
+        subgraph Container["SizedBox height: 150 — FIXED container"]
+            direction TB
+            C["Align bottomCenter → Bird SVG"]
         end
+        A --> B --> Container
     end
 
     style A fill:#fff,stroke:#888
     style B fill:#eee,stroke:#888
-    style container fill:#e8f0ff,stroke:#49a
-    style D fill:#ffe8e8,stroke:#a49
+    style Container fill:#e8f0ff,stroke:#49a
+    style C fill:#ffe8e8,stroke:#a49
 ```
 
 This column is positioned with:
@@ -81,35 +81,35 @@ Since `bottom` is used, the column's **bottom edge** (the bird's feet) is pinned
 The bird SVG sits inside a **fixed 150px `SizedBox`** with `Align(alignment: Alignment.bottomCenter)`:
 
 ```mermaid
-block-beta
-    columns 2
-
-    block:adult["Adult Bird"]
-        columns 1
+flowchart TB
+    subgraph Adult["Adult Bird"]
+        direction TB
         A1["SpeechBubble ~80px"]
         A2["Gap 4px"]
-        block:a3["SizedBox(h:150)"]
-            columns 1
-            A4["Bird SVG 150px<br/>(fills container)"]
+        subgraph A3["SizedBox h:150"]
+            A4["Bird SVG 150px<br/>fills container"]
         end
+        A1 --> A2 --> A3
     end
 
-    block:baby["Baby Bird"]
-        columns 1
+    subgraph Baby["Baby Bird"]
+        direction TB
         B1["SpeechBubble ~80px"]
         B2["Gap 4px"]
-        block:b3["SizedBox(h:150)"]
-            columns 1
+        subgraph B3["SizedBox h:150"]
+            direction TB
             B5["Empty 37.5px"]
-            B4["Bird SVG 112.5px<br/>(bottom-aligned)"]
+            B4["Bird SVG 112.5px<br/>bottom-aligned"]
+            B5 --> B4
         end
+        B1 --> B2 --> B3
     end
 
     style A4 fill:#ffe8e8,stroke:#a49
     style B4 fill:#ffe8e8,stroke:#a49
     style B5 fill:#f8f8f8,stroke:#ccc,stroke-dasharray: 5 5
-    style a3 fill:#e8f0ff,stroke:#49a
-    style b3 fill:#e8f0ff,stroke:#49a
+    style A3 fill:#e8f0ff,stroke:#49a
+    style B3 fill:#e8f0ff,stroke:#49a
 ```
 
 - **Adult (150px):** Fills the entire 150px container. Feet touch the bottom edge.
@@ -162,27 +162,33 @@ As the user drags the sheet up, the bird rises with it but the gap compresses, c
 A vertical slice of the screen showing how everything stacks from bottom to top:
 
 ```mermaid
-block-beta
-    columns 1
-    A["App Bar + Safe Area (top)"]
-    B["← kFadeRange (40px) → app bar fades when bird approaches"]
-    C["↕ gap (restGap → 4px, compresses during drag)"]
-    block:birdcol["Bird Column (234px constant)"]
-        columns 1
-        D["SpeechBubble (~80px)"]
-        E["SizedBox(4px)"]
-        F["Bird Container (150px, bottom-aligned SVG)"]
-    end
-    G["↕ gap above sheet top"]
-    block:sheet["VibePickerSheet"]
-        columns 1
-        H["Drag Handle (24px)"]
-        I["Vibe Grid (scrollable)"]
-        J["Footer + Safe Area (bottom)"]
+flowchart TB
+    A["App Bar + Safe Area top"]
+    B["kFadeRange 40px — app bar fades when bird approaches"]
+    C["gap: restGap → 4px, compresses during drag"]
+
+    subgraph BirdCol["Bird Column — 234px constant"]
+        direction TB
+        D["SpeechBubble ~80px"]
+        E["SizedBox 4px"]
+        F["Bird Container 150px, bottom-aligned SVG"]
+        D --> E --> F
     end
 
-    style birdcol fill:#e8f0ff,stroke:#49a
-    style sheet fill:#e8e8f4,stroke:#49a
+    G["gap above sheet top"]
+
+    subgraph Sheet["VibePickerSheet"]
+        direction TB
+        H["Drag Handle 24px"]
+        I["Vibe Grid scrollable"]
+        J["Footer + Safe Area bottom"]
+        H --> I --> J
+    end
+
+    A --> B --> C --> BirdCol --> G --> Sheet
+
+    style BirdCol fill:#e8f0ff,stroke:#49a
+    style Sheet fill:#e8e8f4,stroke:#49a
     style A fill:#f4e8e8,stroke:#a49
     style B fill:#f8f8f8,stroke:#ccc,stroke-dasharray: 5 5
     style C fill:#f8f8f8,stroke:#ccc,stroke-dasharray: 5 5
@@ -270,7 +276,7 @@ flowchart TD
 
 ## App Bar Fade
 
-The app bar replicates the same gap logic from `BirdViewArea` to compute the bird column's top edge, then fades based on proximity:
+The app bar uses `BirdViewArea.computeRestGap()` (the same shared function) to compute the bird column's top edge, then fades based on proximity:
 
 ```dart
 birdColumnTop = screenHeight * (1 - sheetExtent) - gap - kBirdColumnHeight

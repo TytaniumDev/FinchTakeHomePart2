@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/vibe_data.dart';
+import '../theme/colors.dart';
 import '../widgets/vibe_picker_sheet.dart';
 
 /// Isolated test screen for verifying draggable sheet behavior.
@@ -53,7 +54,7 @@ class _DraggableSheetTestScreenState extends State<DraggableSheetTestScreen> {
           // Background with label
           Positioned.fill(
             child: Container(
-              color: const Color(0xFF2A5641),
+              color: VibeColors.magicBirdAreaBackground,
               child: SafeArea(
                 child: Column(
                   children: [
@@ -78,8 +79,8 @@ class _DraggableSheetTestScreenState extends State<DraggableSheetTestScreen> {
             vibes: kDefaultVibes,
             selectedIndex: _selectedIndex,
             onSelected: (index) => setState(() => _selectedIndex = index),
-            drawerBackground: const Color(0xFF1B4934),
-            footerBackground: const Color(0xFF285641),
+            drawerBackground: VibeColors.magicDrawerBackground,
+            footerBackground: VibeColors.magicFooterBackground,
             minExtent: _minExtent,
             maxExtent: _maxExtent,
             targetRows: _targetRows,
