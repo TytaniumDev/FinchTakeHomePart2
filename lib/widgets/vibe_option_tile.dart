@@ -51,45 +51,45 @@ class VibeOptionTile extends StatelessWidget {
       _kThemeColorWhiteMix,
     );
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: kVibeTransitionDuration,
-        curve: kStandardCurve,
-        padding: EdgeInsets.all(8 * scale),
-        decoration: BoxDecoration(
-          color: isSelected ? _kSelectedBackgroundColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(_kTileBorderRadius),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedContainer(
-              duration: kVibeTransitionDuration,
-              curve: kStandardCurve,
-              width: iconSize,
-              height: iconSize,
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.white : themeColor,
-                border: Border.all(color: Colors.white, width: 2),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: SvgPicture.asset(
-                  VibeTheme.fromType(vibe.type).iconAssetPath,
-                  width: iconSize * _kIconSizeRatio,
-                  height: iconSize * _kIconSizeRatio,
+    return Material(
+      color: isSelected ? _kSelectedBackgroundColor : Colors.transparent,
+      borderRadius: BorderRadius.circular(_kTileBorderRadius),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(_kTileBorderRadius),
+        splashColor: Colors.white24,
+        highlightColor: Colors.white10,
+        child: Padding(
+          padding: EdgeInsets.all(8 * scale),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: kVibeTransitionDuration,
+                curve: kStandardCurve,
+                width: iconSize,
+                height: iconSize,
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : themeColor,
+                  border: Border.all(color: Colors.white, width: 2),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: SvgPicture.asset(
+                    VibeTheme.fromType(vibe.type).iconAssetPath,
+                    width: iconSize * _kIconSizeRatio,
+                    height: iconSize * _kIconSizeRatio,
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 8 * scale),
-            Text(
-              vibe.label,
-              style: const TextStyle(color: Colors.white),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+              SizedBox(height: 8 * scale),
+              Text(
+                vibe.label,
+                style: const TextStyle(color: Colors.white),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );

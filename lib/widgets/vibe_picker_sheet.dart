@@ -237,6 +237,7 @@ class _VibePickerSheetState extends State<VibePickerSheet> {
       minChildSize: widget.minExtent,
       maxChildSize: widget.maxExtent,
       builder: (context, scrollController) {
+        // Animate the background color of the sheet.
         return AnimatedContainer(
           duration: kVibeTransitionDuration,
           curve: kStandardCurve,

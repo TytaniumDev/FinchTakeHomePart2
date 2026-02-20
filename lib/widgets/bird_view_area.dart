@@ -141,6 +141,10 @@ class BirdViewArea extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final anchor = useNewBubblePositioning ? kBirdAnchors[birdAssetPath] : null;
+    // Pre-build bird column (doesn't rebuild during drag).
+    final birdWidget = anchor != null
+        ? _buildNewLayout(anchor)
+        : _buildOldLayout();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -170,11 +174,6 @@ class BirdViewArea extends StatelessWidget {
             height: svgRenderedHeight,
           ),
         );
-
-        // Pre-build bird column (doesn't rebuild during drag).
-        final birdWidget = anchor != null
-            ? _buildNewLayout(anchor)
-            : _buildOldLayout();
 
         return Stack(
           clipBehavior: Clip.hardEdge,

@@ -6,7 +6,7 @@ const _kFooterHorizontalPadding = 24.0;
 const _kFooterVerticalPadding = 16.0;
 const _kDoneButtonBorderRadius = 14.0;
 
-/// Footer bar with the "Done" / "Upgrade to send" button.
+/// Footer bar with the "Done" button.
 class Footer extends StatelessWidget {
   const Footer({super.key, required this.backgroundColor, this.onTap});
 
@@ -26,24 +26,25 @@ class Footer extends StatelessWidget {
         bottom: MediaQuery.paddingOf(context).bottom + _kFooterVerticalPadding,
       ),
       color: backgroundColor,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(
-            vertical: _kFooterVerticalPadding,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(_kDoneButtonBorderRadius),
-          ),
-          child: const Center(
-            child: Text(
-              'Done',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(_kDoneButtonBorderRadius),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(_kDoneButtonBorderRadius),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              vertical: _kFooterVerticalPadding,
+            ),
+            child: const Center(
+              child: Text(
+                'Done',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
               ),
             ),
           ),
