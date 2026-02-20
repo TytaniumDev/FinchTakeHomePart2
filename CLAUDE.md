@@ -29,13 +29,11 @@ dart format lib/
 
 ## Architecture
 
-**State management:** Plain `StatefulWidget` — no Riverpod, Bloc, or Provider. All state lives in `_VibeSelectionScreenState` (`lib/screens/vibe_selection_screen.dart`) and is passed down via constructor params and callbacks.
+**State management:** Plain `StatefulWidget` — no Riverpod, Bloc, or Provider. All state lives in `_VibeSelectionScreenState` (`lib/widgets/vibe_selection_screen.dart`) and is passed down via constructor params and callbacks.
 
 **File structure:**
-- `lib/main.dart` — `main()` entry point only (DevicePreview + GoogleFonts config)
-- `lib/screens/vibes_screen.dart` — `VibesScreen` (MaterialApp, theme, route table)
-- `lib/screens/vibe_selection_screen.dart` — `VibeSelectionScreen` + state
-- `lib/widgets/` — `bird_view_area`, `vibe_picker_sheet`, `speech_bubble`, `animated_typed_text`, `vibe_option_tile`, `footer`, `adaptive_grid_delegate`
+- `lib/main.dart` — `main()` entry point + `VibesScreen` (MaterialApp, theme, route table)
+- `lib/widgets/` — `vibe_selection_screen`, `bird_view_area`, `vibe_picker_sheet`, `speech_bubble`, `animated_typed_text`, `vibe_option_tile`, `footer`, `adaptive_grid_delegate`
 - `lib/models/` — `vibe_data` (VibeOption, VibeType, BirdAge, VibeTheme, kDefaultVibes), `bird_anchor_data` (per-asset mouth/bubble anchor points)
 - `lib/theme/` — `colors` (VibeColors), `animation` (shared transition duration/curve)
 - `lib/debug/` — isolated test screens (bird positioning, sheet behavior, grid scaling, anchor calibration)
@@ -58,7 +56,7 @@ dart format lib/
 
 **Theme colors:** Centralized in `lib/theme/colors.dart` (`VibeColors`).
 
-**Font:** Rubik via `google_fonts` package, configured in `lib/screens/vibes_screen.dart` theme.
+**Font:** Rubik via `google_fonts` package, configured in `lib/main.dart` theme.
 
 ## Key Design Constraints (from requirements)
 
@@ -74,7 +72,7 @@ The close button navigates to `/debug` which shows `DebugPickerScreen` — a men
 - `/debug/grid` — adaptive grid sizing tester
 - `/debug/anchor` — bird anchor calibration tool
 
-New debug screens: add to `_kDebugEntries` in `debug_picker_screen.dart` and register the route in `lib/screens/vibes_screen.dart`.
+New debug screens: add to `_kDebugEntries` in `debug_picker_screen.dart` and register the route in `lib/main.dart`.
 
 ## Key Dependencies
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../models/vibe_data.dart';
-import '../widgets/bird_view_area.dart';
-import '../widgets/vibe_picker_sheet.dart';
+import 'bird_view_area.dart';
+import 'vibe_picker_sheet.dart';
 
 // App bar composition: 8px top padding + 48px IconButton + 8px bottom padding.
 const _kAppBarHeight = 64.0;
